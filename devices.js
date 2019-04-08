@@ -568,7 +568,7 @@ const devices = [
         extend: generic.light_onoff_brightness,
     },
     {
-        zigbeeModel: ['TRADFRI transformer 30W'],
+        zigbeeModel: ['TRADFRI transformer 30W', 'TRADFRI Driver 30W'],
         model: 'ICPSHC24-30EU-IL-1',
         vendor: 'IKEA',
         description: 'TRADFRI driver for wireless control (30 watt)',
@@ -853,6 +853,13 @@ const devices = [
         model: '3261331P7',
         vendor: 'Philips',
         description: 'Hue white ambiance Still',
+        extend: hue.light_onoff_brightness_colortemp,
+    },
+    {
+        zigbeeModel: ['LTC011'],
+        model: '4096730U7',
+        vendor: 'Philips',
+        description: 'Hue Cher ceiling light',
         extend: hue.light_onoff_brightness_colortemp,
     },
     {
@@ -1362,6 +1369,13 @@ const devices = [
     {
         zigbeeModel: ['RB 265'],
         model: 'RB 265',
+        vendor: 'Innr',
+        description: 'E27 Bulb',
+        extend: generic.light_onoff_brightness,
+    },
+    {
+        zigbeeModel: ['RB 278 T'],
+        model: 'RB 278 T',
         vendor: 'Innr',
         description: 'E27 Bulb',
         extend: generic.light_onoff_brightness,
@@ -2077,6 +2091,22 @@ const devices = [
                     'rgb': 11,
                     'white': 15,
                 };
+            } else {
+                return {};
+            }
+        },
+    },
+    {
+        zigbeeModel: ['GL-S-004Z'],
+        model: 'GL-S-004Z',
+        vendor: 'Gledopto',
+        description: 'Zigbee Smart WW/CW GU10',
+        extend: gledopto.light_onoff_brightness_colortemp,
+        ep: (device) => {
+            if (device.epList.toString() === '11,12,13') {
+                return {'': 12};
+            } else if (device.epList.toString() === '10,11,13' || device.epList.toString() === '11,13') {
+                return {'': 11};
             } else {
                 return {};
             }
