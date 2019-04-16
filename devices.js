@@ -895,7 +895,7 @@ const devices = [
         model: '324131092621',
         vendor: 'Philips',
         description: 'Hue dimmer switch',
-        supports: 'on/off',
+        supports: 'on/off, brightness up/down/hold/release',
         fromZigbee: [
             fz._324131092621_ignore_on, fz._324131092621_ignore_off, fz._324131092621_ignore_step,
             fz._324131092621_ignore_stop, fz._324131092621_notification,
@@ -1239,7 +1239,14 @@ const devices = [
         zigbeeModel: ['Gardenpole RGBW-Lightify'],
         model: '4058075036147',
         vendor: 'OSRAM',
-        description: 'Smart+ Gardenpole RGBW',
+        description: 'Smart+ gardenpole RGBW',
+        extend: generic.light_onoff_brightness_colortemp_colorxy,
+    },
+    {
+        zigbeeModel: ['Gardenpole Mini RGBW OSRAM'],
+        model: 'AC0363900NJ',
+        vendor: 'OSRAM',
+        description: 'Smart+ mini gardenpole RGBW',
         extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
     {
@@ -3382,11 +3389,10 @@ const devices = [
         vendor: 'Yale',
         description: 'Assure lock',
         supports: 'lock/unlock, battery',
-        fromZigbee: [fz.YRD426NRSC_lock, fz.battery_200],
-        toZigbee: [tz.YRD426NRSC_lock],
+        fromZigbee: [fz.generic_lock, fz.battery_200],
+        toZigbee: [tz.generic_lock],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
-
             const actions = [
                 (cb) => device.report('closuresDoorLock', 'lockState', 0, repInterval.HOUR, 0, cb),
                 (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, repInterval.MAX, 0, cb),
@@ -3394,6 +3400,44 @@ const devices = [
 
             execute(device, actions, callback);
         },
+    },
+    {
+        zigbeeModel: ['YRD226 TSDB'],
+        model: 'YRD226HA2619',
+        vendor: 'Yale',
+        description: 'Assure lock',
+        supports: 'lock/unlock, battery',
+        fromZigbee: [fz.generic_lock, fz.battery_200],
+        toZigbee: [tz.generic_lock],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.report('closuresDoorLock', 'lockState', 0, repInterval.HOUR, 0, cb),
+                (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, repInterval.MAX, 0, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+    {
+        zigbeeModel: ['iZBModule01'],
+        model: 'YMF40',
+        vendor: 'Yale',
+        description: 'Real living lock',
+        supports: 'lock/unlock, battery',
+        fromZigbee: [fz.YMF40_lockstatus],
+        toZigbee: [tz.generic_lock],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+
+            const actions = [
+                (cb) => device.report('closuresDoorLock', 'lockState', 0, 3, 0, cb),
+                (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, 3, 0, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+
     },
 
     // Keen Home
