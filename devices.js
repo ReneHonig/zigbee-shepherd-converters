@@ -12,37 +12,41 @@ const repInterval = {
 
 const coordinatorGroup = 99;
 
+const defaultIgnoreConverters = [
+    fz.ignore_genGroups_devChange, fz.ignore_genIdentify_change, fz.ignore_genScenes_change,
+    fz.ignore_diagnostic_change, fz.ignore_lightLink_change, fz.ignore_basic_change,
+];
+
 const generic = {
     light_onoff_brightness: {
         supports: 'on/off, brightness',
         fromZigbee: [
             fz.ignore_light_brightness_change, fz.state_change, fz.state, fz.brightness_report,
-            fz.ignore_genGroups_devChange, fz.ignore_basic_change,
-        ],
+        ].concat(defaultIgnoreConverters),
         toZigbee: [tz.light_onoff_brightness, tz.ignore_transition, tz.light_alert],
     },
     light_onoff_brightness_colortemp: {
         supports: 'on/off, brightness, color temperature',
         fromZigbee: [
-            fz.ignore_light_brightness_change, fz.color_colortemp, fz.state_change, fz.state, fz.ignore_basic_change,
-            fz.brightness_report, fz.color_colortemp_report, fz.ignore_genGroups_devChange,
-        ],
+            fz.ignore_light_brightness_change, fz.color_colortemp, fz.state_change, fz.state,
+            fz.brightness_report, fz.color_colortemp_report,
+        ].concat(defaultIgnoreConverters),
         toZigbee: [tz.light_onoff_brightness, tz.light_colortemp, tz.ignore_transition, tz.light_alert],
     },
     light_onoff_brightness_colorxy: {
         supports: 'on/off, brightness, color xy',
         fromZigbee: [
-            fz.ignore_light_brightness_change, fz.color_colortemp, fz.state_change, fz.state, fz.ignore_basic_change,
-            fz.brightness_report, fz.color_colortemp_report, fz.ignore_genGroups_devChange,
-        ],
+            fz.ignore_light_brightness_change, fz.color_colortemp, fz.state_change, fz.state,
+            fz.brightness_report, fz.color_colortemp_report,
+        ].concat(defaultIgnoreConverters),
         toZigbee: [tz.light_onoff_brightness, tz.light_color, tz.ignore_transition, tz.light_alert],
     },
     light_onoff_brightness_colortemp_colorxy: {
         supports: 'on/off, brightness, color temperature, color xy',
         fromZigbee: [
-            fz.ignore_light_brightness_change, fz.color_colortemp, fz.state_change, fz.state, fz.ignore_basic_change,
-            fz.brightness_report, fz.color_colortemp_report, fz.ignore_genGroups_devChange,
-        ],
+            fz.ignore_light_brightness_change, fz.color_colortemp, fz.state_change, fz.state,
+            fz.brightness_report, fz.color_colortemp_report,
+        ].concat(defaultIgnoreConverters),
         toZigbee: [
             tz.light_onoff_brightness, tz.light_color_colortemp, tz.ignore_transition,
             tz.light_alert,
@@ -1587,7 +1591,7 @@ const devices = [
         fromZigbee: generic.light_onoff_brightness_colortemp_colorxy.fromZigbee.concat([
             fz.ignore_genIdentify_change,
             fz.ignore_diagnostic_change,
-            fz.ignore_genscenes_change,
+            fz.ignore_genScenes_change,
         ]),
     },
     {
@@ -1616,7 +1620,7 @@ const devices = [
         fromZigbee: generic.light_onoff_brightness.fromZigbee.concat([
             fz.ignore_genIdentify_change,
             fz.ignore_diagnostic_change,
-            fz.ignore_genscenes_change,
+            fz.ignore_genScenes_change,
         ]),
     },
     {
@@ -1931,6 +1935,13 @@ const devices = [
         supports: 'on/off, click',
         toZigbee: [tz.on_off],
         fromZigbee: [fz.nue_click, fz.ignore_power_report, fz.ignore_power_change],
+    },
+    {
+        zigbeeModel: ['LXN56-DC27LX1.1'],
+        model: 'LXZB-02A',
+        vendor: 'Nue / 3A',
+        description: 'Smart light controller',
+        extend: generic.light_onoff_brightness,
     },
     {
         zigbeeModel: ['FNB56-ZSW03LX2.0'],
@@ -3751,6 +3762,20 @@ const devices = [
                 }
             });
         },
+    },
+
+    // Third Reality
+    {
+        zigbeeModel: ['3RSS008Z'],
+        model: '3RSS008Z',
+        vendor: 'Third Reality',
+        description: 'RealitySwitch Plus',
+        supports: 'on/off, battery',
+        fromZigbee: [
+            fz.ignore_onoff_change, fz.state, fz.ignore_genIdentify_change,
+            fz.ignore_basic_change,
+        ],
+        toZigbee: [tz.on_off, tz.ignore_transition],
     },
 ];
 
