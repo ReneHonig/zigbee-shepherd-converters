@@ -236,7 +236,7 @@ const devices = [
         supports: 'on/off, power measurement',
         fromZigbee: [
             fz.QBKG04LM_QBKG11LM_state, fz.QBKG11LM_power, fz.QBKG04LM_QBKG11LM_operation_mode,
-            fz.ignore_onoff_change, fz.ignore_basic_change,
+            fz.ignore_onoff_change, fz.ignore_basic_change, fz.QBKG11LM_click,
             fz.ignore_multistate_report, fz.ignore_multistate_change, fz.ignore_analog_change, fz.xiaomi_power,
         ],
         toZigbee: [tz.on_off, tz.xiaomi_switch_operation_mode],
@@ -264,7 +264,7 @@ const devices = [
         supports: 'on/off, power measurement',
         fromZigbee: [
             fz.QBKG03LM_QBKG12LM_LLKZMK11LM_state, fz.QBKG12LM_LLKZMK11LM_power, fz.QBKG03LM_QBKG12LM_operation_mode,
-            fz.ignore_analog_change, fz.ignore_basic_change,
+            fz.ignore_analog_change, fz.ignore_basic_change, fz.QBKG12LM_click,
             fz.ignore_multistate_report, fz.ignore_multistate_change, fz.ignore_onoff_change, fz.xiaomi_power,
         ],
         toZigbee: [tz.on_off, tz.xiaomi_switch_operation_mode],
@@ -2491,6 +2491,30 @@ const devices = [
         },
     },
     {
+        zigbeeModel: ['multi'],
+        model: 'IM6001-MPP01',
+        vendor: 'SmartThings',
+        description: 'Multipurpose sensor (2018 model)',
+        supports: 'contact',
+        fromZigbee: [
+            fz.generic_temperature, fz.ignore_temperature_change, fz.st_contact_status_change,
+            fz.generic_batteryvoltage_3000_2500, fz.ignore_iaszone_change, fz.ignore_iaszone_attreport,
+        ],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, cb),
+                (cb) => device.bind('msTemperatureMeasurement', coordinator, cb),
+                (cb) => device.report('msTemperatureMeasurement', 'measuredValue', 30, 600, 1, cb),
+                (cb) => device.bind('genPowerCfg', coordinator, cb),
+                (cb) => device.report('genPowerCfg', 'batteryVoltage', 0, 1000, 0, cb),
+            ];
+            execute(device, actions, callback);
+        },
+    },
+    {
         /**
          * Note: humidity not (yet) implemented, as this seems to use proprietary cluster
          * see Smartthings device handler (profileID: 0x9194, clusterId: 0xFC45
@@ -2944,6 +2968,15 @@ const devices = [
         fromZigbee: [fz.state_change],
         toZigbee: [tz.on_off],
     },
+    {
+        zigbeeModel: ['SCM-3_00.00.03.15'],
+        model: 'SCM-5ZBS',
+        vendor: 'Climax',
+        description: 'Roller shutter',
+        supports: 'open/close',
+        fromZigbee: [fz.cover_position_report, fz.cover_position, fz.cover_state_change, fz.cover_state_report],
+        toZigbee: [tz.cover_position, tz.cover_open_close],
+    },
 
     // HEIMAN
     {
@@ -3224,6 +3257,7 @@ const devices = [
         fromZigbee: [
             fz.tint404011_on, fz.tint404011_off, fz.cmdToggle, fz.tint404011_brightness_updown_click,
             fz.tint404011_move_to_color_temp, fz.tint404011_move_to_color, fz.tint404011_scene,
+            fz.tint404011_brightness_updown_release, fz.tint404011_brightness_updown_hold,
         ],
         toZigbee: [],
     },
@@ -3694,6 +3728,20 @@ const devices = [
         description: 'Smart LED driver',
         extend: generic.light_onoff_brightness,
     },
+    {
+        zigbeeModel: ['HOMA1002'],
+        model: 'HLC610-Z',
+        vendor: 'Shenzhen Homa',
+        description: 'Wireless dimmable controller',
+        extend: generic.light_onoff_brightness,
+    },
+    {
+        zigbeeModel: ['HOMA1031'],
+        model: 'HLC821-Z-SC',
+        vendor: 'Shenzhen Homa',
+        description: 'ZigBee AC phase-cut dimmer',
+        extend: generic.light_onoff_brightness,
+    },
 
     // Honyar
     {
@@ -3722,6 +3770,26 @@ const devices = [
             ];
 
             execute(ep1, actions, callback);
+        },
+    },
+
+    // Danalock
+    {
+        zigbeeModel: ['V3-BTZB'],
+        model: 'V3-BTZB',
+        vendor: 'Danalock',
+        description: 'BT/ZB smartlock',
+        supports: 'lock/unlock, battery',
+        fromZigbee: [fz.generic_lock, fz.battery_200],
+        toZigbee: [tz.generic_lock],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.report('closuresDoorLock', 'lockState', 0, repInterval.HOUR, 0, cb),
+                (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, repInterval.MAX, 0, cb),
+            ];
+
+            execute(device, actions, callback);
         },
     },
 
@@ -3776,6 +3844,41 @@ const devices = [
             fz.ignore_basic_change,
         ],
         toZigbee: [tz.on_off, tz.ignore_transition],
+    },
+
+    // Hampton Bay
+    {
+        zigbeeModel: ['HDC52EastwindFan'],
+        model: '99432',
+        vendor: 'Hampton Bay',
+        description: 'Universal wink enabled white ceiling fan premier remote control',
+        supports: 'on/off, brightness, fan_mode and fan_state',
+        fromZigbee: generic.light_onoff_brightness.fromZigbee.concat([
+            fz.ignore_fan_change, fz.generic_fan_mode,
+        ]),
+        toZigbee: generic.light_onoff_brightness.toZigbee.concat([tz.fan_mode]),
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.report('genOnOff', 'onOff', 0, 1000, 0, cb),
+                (cb) => device.bind('genLevelCtrl', coordinator, cb),
+                (cb) => device.report('genLevelCtrl', 'currentLevel', 0, 1000, 0, cb),
+                (cb) => device.bind('hvacFanCtrl', coordinator, cb),
+                (cb) => device.report('hvacFanCtrl', 'fanMode', 0, 1000, 0, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+
+    // Iluminize
+    {
+        zigbeeModel: ['DIM Lighting'],
+        model: '511.10',
+        vendor: 'Iluminize',
+        description: 'Zigbee LED-Controller ',
+        extend: generic.light_onoff_brightness,
     },
 ];
 

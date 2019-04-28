@@ -98,13 +98,12 @@ const converters = {
             const attrId = 'currentLevel';
 
             if (type === 'set') {
-                value = Math.round(Number(value) * 2.55).toString();
                 return {
                     cid: cid,
                     cmd: 'moveToLevelWithOnOff',
                     cmdType: 'functional',
                     zclData: {
-                        level: value,
+                        level: Math.round(Number(value) * 2.55).toString(),
                         transtime: 0,
                     },
                     cfg: cfg.default,
@@ -808,6 +807,35 @@ const converters = {
                         dataType: zclId.attrType(cid, attrId).value,
                         attrData: value,
                     }],
+                    cfg: cfg.default,
+                };
+            }
+        },
+    },
+    fan_mode: {
+        key: ['fan_mode', 'fan_state'],
+        convert: (key, value, message, type, postfix) => {
+            const cid = 'hvacFanCtrl';
+            const attrId = 'fanMode';
+
+            if (type === 'set') {
+                value = value.toLowerCase();
+                const attrData = common.fanMode[value];
+
+                return {
+                    cid: cid,
+                    cmd: 'write',
+                    cmdType: 'foundation',
+                    zclData: [{attrId: zclId.attr(cid, attrId).value, attrData: attrData, dataType: 48}],
+                    cfg: cfg.default,
+                    newState: {fan_mode: value, fan_state: value === 'off' ? 'OFF' : 'ON'},
+                };
+            } else if (type === 'get') {
+                return {
+                    cid: cid,
+                    cmd: 'read',
+                    cmdType: 'foundation',
+                    zclData: [{attrId: zclId.attr(cid, attrId).value}],
                     cfg: cfg.default,
                 };
             }
