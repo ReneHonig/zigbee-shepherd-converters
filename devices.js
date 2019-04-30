@@ -1455,6 +1455,13 @@ const devices = [
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
+        zigbeeModel: ['RS 228 T'],
+        model: 'RS 228 T',
+        vendor: 'Innr',
+        description: 'GU10 Spot 350 lm, dimmable, white spectrum',
+        extend: generic.light_onoff_brightness_colortemp,
+    },
+    {
         zigbeeModel: ['RB 145'],
         model: 'RB 145',
         vendor: 'Innr',
@@ -3879,6 +3886,27 @@ const devices = [
         vendor: 'Iluminize',
         description: 'Zigbee LED-Controller ',
         extend: generic.light_onoff_brightness,
+    },
+
+    // Anchor
+    {
+        zigbeeModel: ['FB56-SKT17AC1.4'],
+        model: '67200BL',
+        description: 'Vetaar smart plug',
+        supports: 'on/off',
+        vendor: 'Anchor',
+        fromZigbee: [fz.ignore_onoff_change, fz.state],
+        toZigbee: [tz.on_off],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 3);
+            const cfg = {direction: 0, attrId: 0, dataType: 16, minRepIntval: 0, maxRepIntval: 1000, repChange: 0};
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.foundation('genOnOff', 'configReport', [cfg], foundationCfg, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
     },
 ];
 
