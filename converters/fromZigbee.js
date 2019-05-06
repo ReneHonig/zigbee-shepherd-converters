@@ -398,7 +398,7 @@ const converters = {
                     publish({click: 'long'});
                     store[deviceID].timer = null;
                     store[deviceID].long = Date.now();
-                }, 1000); // After 1000 milliseconds of not releasing we assume long click.
+                }, options.long_timeout || 1000); // After 1000 milliseconds of not releasing we assume long click.
             } else if (state === 1) {
                 if (store[deviceID].long) {
                     const duration = Date.now() - store[deviceID].long;
@@ -2387,6 +2387,62 @@ const converters = {
         convert: (model, msg, publish, options) => {
             const key = getKey(common.fanMode, msg.data.data.fanMode);
             return {fan_mode: key, fan_state: key === 'off' ? 'OFF' : 'ON'};
+        },
+    },
+    GIRA2430_scene_click: {
+        cid: 'genScenes',
+        type: 'cmdRecall',
+        convert: (model, msg, publish, options) => {
+            return {
+                action: `select_${msg.data.data.sceneid}`,
+            };
+        },
+    },
+    GIRA2430_on_click: {
+        cid: 'genOnOff',
+        type: 'cmdOn',
+        convert: (model, msg, publish, options) => {
+            return {action: 'on'};
+        },
+    },
+    GIRA2430_off_click: {
+        cid: 'genOnOff',
+        type: 'cmdOffWithEffect',
+        convert: (model, msg, publish, options) => {
+            return {action: 'off'};
+        },
+    },
+    GIRA2430_down_hold: {
+        cid: 'genLevelCtrl',
+        type: 'cmdStep',
+        convert: (model, msg, publish, options) => {
+            return {
+                action: 'down',
+                step_mode: msg.data.data.stepmode,
+                step_size: msg.data.data.stepsize,
+                transition_time: msg.data.data.transtime,
+            };
+        },
+    },
+    GIRA2430_up_hold: {
+        cid: 'genLevelCtrl',
+        type: 'cmdStepWithOnOff',
+        convert: (model, msg, publish, options) => {
+            return {
+                action: 'up',
+                step_mode: msg.data.data.stepmode,
+                step_size: msg.data.data.stepsize,
+                transition_time: msg.data.data.transtime,
+            };
+        },
+    },
+    GIRA2430_stop: {
+        cid: 'genLevelCtrl',
+        type: 'cmdStop',
+        convert: (model, msg, publish, options) => {
+            return {
+                action: 'stop',
+            };
         },
     },
 

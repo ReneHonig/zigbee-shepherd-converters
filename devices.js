@@ -888,6 +888,13 @@ const devices = [
         extend: hue.light_onoff_brightness_colortemp,
     },
     {
+        zigbeeModel: ['LWB015'],
+        model: '046677476816',
+        vendor: 'Philips',
+        description: 'Hue white PAR38 outdoor',
+        extend: hue.light_onoff_brightness,
+    },
+    {
         zigbeeModel: ['LLC010'],
         model: '7199960PH',
         vendor: 'Philips',
@@ -899,7 +906,7 @@ const devices = [
         model: '324131092621',
         vendor: 'Philips',
         description: 'Hue dimmer switch',
-        supports: 'on/off, brightness up/down/hold/release',
+        supports: 'on/off, brightness, up/down/hold/release, click count',
         fromZigbee: [
             fz._324131092621_ignore_on, fz._324131092621_ignore_off, fz._324131092621_ignore_step,
             fz._324131092621_ignore_stop, fz._324131092621_notification,
@@ -1589,7 +1596,7 @@ const devices = [
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
-        zigbeeModel: ['LIGHTIFY BR RGBW'],
+        zigbeeModel: ['LIGHTIFY BR RGBW', 'BR30 RGBW'],
         model: '73739',
         vendor: 'Sylvania',
         description: 'LIGHTIFY LED RGBW BR30',
@@ -1628,6 +1635,7 @@ const devices = [
             fz.ignore_genIdentify_change,
             fz.ignore_diagnostic_change,
             fz.ignore_genScenes_change,
+            fz.ignore_light_color_colortemp_report,
         ]),
     },
     {
@@ -2703,6 +2711,15 @@ const devices = [
 
     // Paulmann
     {
+        zigbeeModel: ['Switch Controller '],
+        model: '50043',
+        vendor: 'Paulmann',
+        description: 'SmartHome Zigbee Cephei Switch Controller',
+        supports: 'on/off',
+        fromZigbee: [fz.state, fz.state_change],
+        toZigbee: [tz.on_off],
+    },
+    {
         zigbeeModel: ['Dimmablelight '],
         model: '50045',
         vendor: 'Paulmann',
@@ -3108,6 +3125,24 @@ const devices = [
         toZigbee: [],
     },
     {
+        zigbeeModel: ['WaterSensor-EM'],
+        model: 'HS1-WL-E',
+        vendor: 'HEIMAN',
+        description: 'Water leakage sensor',
+        supports: 'water leak',
+        fromZigbee: [fz.heiman_water_leak],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, cb),
+            ];
+
+            execute(device, actions, callback, 1000);
+        },
+    },
+    {
         zigbeeModel: ['RC_V14'],
         model: 'HS1RC-M',
         vendor: 'HEIMAN',
@@ -3229,6 +3264,15 @@ const devices = [
         vendor: 'Paul Neuhaus',
         description: 'Q-FLAG LED Panel, Smart-Home RGBW',
         extend: generic.light_onoff_brightness_colortemp_colorxy,
+    },
+    {
+        zigbeeModel: ['NLG-plug '],
+        model: '100.425.90',
+        vendor: 'Paul Neuhaus',
+        description: 'Q-PLUG adapter plug with night orientation light',
+        supports: 'on/off',
+        fromZigbee: [fz.ignore_basic_change],
+        toZigbee: [tz.on_off],
     },
 
     // iCasa
@@ -3907,6 +3951,20 @@ const devices = [
 
             execute(device, actions, callback);
         },
+    },
+
+    // Gira
+    {
+        zigbeeModel: [' Remote'],
+        model: '2430-100',
+        vendor: 'Gira',
+        description: 'ZigBee Light Link wall transmitter',
+        supports: 'action',
+        fromZigbee: [
+            fz.GIRA2430_scene_click, fz.GIRA2430_on_click, fz.GIRA2430_off_click, fz.GIRA2430_down_hold,
+            fz.GIRA2430_up_hold, fz.GIRA2430_stop,
+        ],
+        toZigbee: [],
     },
 ];
 
