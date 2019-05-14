@@ -1040,6 +1040,15 @@ const devices = [
             execute(device, [(cb) => device.report('seMetering', 'instantaneousDemand', 10, 60, 1, cb)], callback);
         },
     },
+    {
+        zigbeeModel: ['ZB-RelayControl-1.0.0'],
+        model: 'SWITCH EDP RE:DY',
+        vendor: 'EDP',
+        description: 're:dy switch',
+        supports: 'on/off',
+        fromZigbee: [fz.ignore_onoff_change],
+        toZigbee: [tz.on_off],
+    },
 
     // Custom devices (DiY)
     {
@@ -1677,6 +1686,13 @@ const devices = [
         vendor: 'Sylvania',
         description: 'LIGHTIFY LED gardenspot mini RGB',
         extend: generic.light_onoff_brightness_colorxy,
+    },
+    {
+        zigbeeModel: ['PAR38 W 10 year'],
+        model: '74580',
+        vendor: 'Sylvania',
+        description: 'Smart Home soft white PAR38 outdoor bulb',
+        extend: generic.light_onoff_brightness,
     },
 
     // GE
@@ -3539,7 +3555,7 @@ const devices = [
     // Keen Home
     {
         zigbeeModel: [
-            'SV01-410-MP-1.0', 'SV01-410-MP-1.4', 'SV01-410-MP-1.5', 'SV01-412-MP-1.0',
+            'SV01-410-MP-1.0', 'SV01-410-MP-1.1', 'SV01-410-MP-1.4', 'SV01-410-MP-1.5', 'SV01-412-MP-1.0',
             'SV01-610-MP-1.0', 'SV01-612-MP-1.0',
         ],
         model: 'SV01',
