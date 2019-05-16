@@ -1313,22 +1313,24 @@ const converters = {
             if (msg.data.data.hasOwnProperty('currentSummDelivered') ||
                 msg.data.data.hasOwnProperty('currentSummReceived')) {
                 const endpoint = msg.endpoints[0];
-                const attrs = endpoint.clusters['seMetering'].attrs;
-                let energyFactor = 1;
-                if (attrs.multiplier && attrs.divisor) {
-                    energyFactor = attrs.multiplier / attrs.divisor;
-                }
+                if (endpoint.clusters.has('seMetering')) {
+                    const attrs = endpoint.clusters['seMetering'].attrs;
+                    let energyFactor = 1;
+                    if (attrs.multiplier && attrs.divisor) {
+                        energyFactor = attrs.multiplier / attrs.divisor;
+                    }
 
-                result.energy = 0;
-                if (msg.data.data.hasOwnProperty('currentSummDelivered')) {
-                    const data = msg.data.data['currentSummDelivered'];
-                    const value = (parseInt(data[0]) << 32) + parseInt(data[1]);
-                    result.energy += value * energyFactor;
-                }
-                if (msg.data.data.hasOwnProperty('currentSummReceived')) {
-                    const data = msg.data.data['currentSummReceived'];
-                    const value = (parseInt(data[0]) << 32) + parseInt(data[1]);
-                    result.energy -= value * energyFactor;
+                    result.energy = 0;
+                    if (msg.data.data.hasOwnProperty('currentSummDelivered')) {
+                        const data = msg.data.data['currentSummDelivered'];
+                        const value = (parseInt(data[0]) << 32) + parseInt(data[1]);
+                        result.energy += value * energyFactor;
+                    }
+                    if (msg.data.data.hasOwnProperty('currentSummReceived')) {
+                        const data = msg.data.data['currentSummReceived'];
+                        const value = (parseInt(data[0]) << 32) + parseInt(data[1]);
+                        result.energy -= value * energyFactor;
+                    }
                 }
             }
 
@@ -1339,7 +1341,7 @@ const converters = {
         cid: 'genOnOff',
         type: ['attReport', 'readRsp'],
         convert: (model, msg, publish, options) => {
-            return {state: msg.data.data['onOff'] === 1};
+            return {state: true, led_state: msg.data.data['onOff'] === 1};
         },
     },
     CC2530ROUTER_meta: {
@@ -2300,55 +2302,73 @@ const converters = {
             return {pressure: precisionRoundOptions(pressure, options, 'pressure')};
         },
     },
-    AC0251100NJ_on: {
+    AC0251100NJ_cmdOn: {
         cid: 'genOnOff',
         type: 'cmdOn',
         convert: (model, msg, publish, options) => {
             return {action: 'up'};
         },
     },
-    AC0251100NJ_off: {
+    AC0251100NJ_cmdOff: {
         cid: 'genOnOff',
         type: 'cmdOff',
         convert: (model, msg, publish, options) => {
             return {action: 'down'};
         },
     },
-    AC0251100NJ_on_hold: {
+    AC0251100NJ_cmdMoveWithOnOff: {
         cid: 'genLevelCtrl',
         type: 'cmdMoveWithOnOff',
         convert: (model, msg, publish, options) => {
-            return {action: 'on_hold'};
+            return {action: 'up_hold'};
         },
     },
-    AC0251100NJ_off_hold: {
+    AC0251100NJ_cmdStop: {
+        cid: 'genLevelCtrl',
+        type: 'cmdStop',
+        convert: (model, msg, publish, options) => {
+            const map = {
+                1: 'up_release',
+                2: 'down_release',
+            };
+
+            return {action: map[msg.endpoints[0].epId]};
+        },
+    },
+    AC0251100NJ_cmdMove: {
         cid: 'genLevelCtrl',
         type: 'cmdMove',
         convert: (model, msg, publish, options) => {
-            return {action: 'off_hold'};
+            return {action: 'down_hold'};
         },
     },
-    AC0251100NJ_release: {
-        cid: 'genLevelCtrl',
-        type: 'cmdMoveToLevelWithOnOff',
-        convert: (model, msg, publish, options) => {
-            return {action: 'circle_press'};
-        },
-    },
-
-    AC0251100NJ_circle_release: {
+    AC0251100NJ_cmdMoveHue: {
         cid: 'lightingColorCtrl',
         type: 'cmdMoveHue',
+        convert: (model, msg, publish, options) => {
+            if (msg.data.data.movemode === 0) {
+                return {action: 'circle_release'};
+            }
+        },
+    },
+    AC0251100NJ_cmdMoveToSaturation: {
+        cid: 'lightingColorCtrl',
+        type: 'cmdMoveToSaturation',
         convert: (model, msg, publish, options) => {
             return {action: 'circle_hold'};
         },
     },
-    AC0251100NJ_circle: {
-        cid: 'lightingColorCtrl',
-        type: 'cmdMoveToSaturation',
+    AC0251100NJ_cmdMoveToLevelWithOnOff: {
+        cid: 'genLevelCtrl',
+        type: 'cmdMoveToLevelWithOnOff',
         convert: (model, msg, publish, options) => {
             return {action: 'circle_click'};
         },
+    },
+    AC0251100NJ_cmdMoveToColorTemp: {
+        cid: 'lightingColorCtrl',
+        type: 'cmdMoveToColorTemp',
+        convert: (model, msg, publish, options) => null,
     },
     visonic_contact: {
         cid: 'ssIasZone',

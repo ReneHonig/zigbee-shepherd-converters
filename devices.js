@@ -1033,11 +1033,15 @@ const devices = [
         vendor: 'EDP',
         description: 're:dy plug',
         supports: 'on/off, power measurement',
-        fromZigbee: [fz.ignore_onoff_change, fz.generic_power, fz.ignore_metering_change],
+        fromZigbee: [fz.state, fz.ignore_onoff_change, fz.generic_power, fz.ignore_metering_change],
         toZigbee: [tz.on_off],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 85);
-            execute(device, [(cb) => device.report('seMetering', 'instantaneousDemand', 10, 60, 1, cb)], callback);
+            const actions = [
+                (cb) => device.report('seMetering', 'instantaneousDemand', 10, 60, 1, cb),
+                (cb) => device.report('genOnOff', 'onOff', 1, 60, 1, cb),
+            ];
+            execute(device, actions, callback);
         },
     },
     {
@@ -1046,8 +1050,15 @@ const devices = [
         vendor: 'EDP',
         description: 're:dy switch',
         supports: 'on/off',
-        fromZigbee: [fz.ignore_onoff_change],
+        fromZigbee: [fz.state, fz.ignore_onoff_change],
         toZigbee: [tz.on_off],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 85);
+            const actions = [
+                (cb) => device.report('genOnOff', 'onOff', 1, 60, 1, cb),
+            ];
+            execute(device, actions, callback);
+        },
     },
 
     // Custom devices (DiY)
@@ -1319,23 +1330,30 @@ const devices = [
         model: 'AC0251100NJ',
         vendor: 'OSRAM',
         description: 'Smart+ switch mini',
-        supports: 'on/off, brightness',
+        supports: 'circle, up, down and hold/release',
         fromZigbee: [
-            fz.AC0251100NJ_on, fz.AC0251100NJ_off, fz.AC0251100NJ_on_hold, fz.AC0251100NJ_off_hold,
-            fz.AC0251100NJ_release, fz.AC0251100NJ_circle, fz.AC0251100NJ_circle_release,
-            fz.generic_batteryvoltage_3000_2500,
+            fz.AC0251100NJ_cmdOn, fz.AC0251100NJ_cmdMoveWithOnOff, fz.AC0251100NJ_cmdStop,
+            fz.AC0251100NJ_cmdMoveToColorTemp, fz.AC0251100NJ_cmdMoveHue, fz.AC0251100NJ_cmdMoveToSaturation,
+            fz.AC0251100NJ_cmdOff, fz.AC0251100NJ_cmdMove, fz.generic_batteryvoltage_3000_2500,
+            fz.AC0251100NJ_cmdMoveToLevelWithOnOff,
         ],
         toZigbee: [],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
-            const device = shepherd.find(ieeeAddr, 1);
+            const ep1 = shepherd.find(ieeeAddr, 1);
+            const ep2 = shepherd.find(ieeeAddr, 2);
+            const ep3 = shepherd.find(ieeeAddr, 3);
+
             const actions = [
-                (cb) => device.bind('genOnOff', coordinator, cb),
-                (cb) => device.bind('lightingColorCtrl', coordinator, cb),
-                (cb) => device.bind('genLevelCtrl', coordinator, cb),
-                (cb) => device.bind('genPowerCfg', coordinator, cb),
-                (cb) => device.report('genPowerCfg', 'batteryVoltage', 900, 3600, 0, cb),
+                (cb) => ep1.bind('genOnOff', coordinator, cb),
+                (cb) => ep1.bind('genLevelCtrl', coordinator, cb),
+                (cb) => ep2.bind('genOnOff', coordinator, cb),
+                (cb) => ep2.bind('genLevelCtrl', coordinator, cb),
+                (cb) => ep3.bind('genLevelCtrl', coordinator, cb),
+                (cb) => ep3.bind('lightingColorCtrl', coordinator, cb),
+                (cb) => ep1.bind('genPowerCfg', coordinator, cb),
+                (cb) => ep1.report('genPowerCfg', 'batteryVoltage', 900, 3600, 0, cb),
             ];
-            execute(device, actions, callback);
+            execute(ep1, actions, callback);
         },
 
     },
@@ -2976,7 +2994,7 @@ const devices = [
 
     // Centralite Swiss Plug
     {
-        zigbeeModel: ['4256251-RZHAC', '4257050-RZHAC'],
+        zigbeeModel: ['4256251-RZHAC', '4257050-RZHAC', '4257050-ZHAC'],
         model: '4256251-RZHAC',
         vendor: 'Centralite',
         description: 'White Swiss power outlet switch with power meter',
@@ -3776,6 +3794,23 @@ const devices = [
         supports: 'contact',
         fromZigbee: [fz.visonic_contact, fz.ignore_power_change],
         toZigbee: [],
+    },
+    {
+        zigbeeModel: ['MCT-340 E'],
+        model: 'MCT-340 E',
+        vendor: 'Visonic',
+        description: 'Magnetic door & window contact sensor',
+        supports: 'contact',
+        fromZigbee: [fz.visonic_contact, fz.ignore_power_change],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 0}, cb),
+            ];
+            execute(device, actions, callback);
+        },
     },
 
     // Sunricher
