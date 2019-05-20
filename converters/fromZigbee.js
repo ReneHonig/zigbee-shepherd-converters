@@ -1378,6 +1378,28 @@ const converters = {
             return payload;
         },
     },
+    ZigUP_parse: {
+        cid: 'genOnOff',
+        type: ['attReport', 'readRsp'],
+        convert: (model, msg, publish, options) => {
+            const lookup = {
+                '0': 'timer',
+                '1': 'key',
+                '2': 'dig-in',
+            };
+
+            return {
+                state: msg.data.data['onOff'] === 1 ? 'ON' : 'OFF',
+                cpu_temperature: precisionRound(msg.data.data['41361'], 2),
+                external_temperature: precisionRound(msg.data.data['41362'], 1),
+                external_humidity: precisionRound(msg.data.data['41363'], 1),
+                s0_counts: msg.data.data['41364'],
+                adc_volt: precisionRound(msg.data.data['41365'], 3),
+                dig_input: msg.data.data['41366'],
+                reason: lookup[msg.data.data['41367']],
+            };
+        },
+    },
     Z809A_power: {
         cid: 'haElectricalMeasurement',
         type: ['attReport', 'readRsp'],
@@ -2468,6 +2490,65 @@ const converters = {
             return {
                 action: 'stop',
             };
+        },
+    },
+    ZGRC013_cmdOn: {
+        cid: 'genOnOff',
+        type: 'cmdOn',
+        convert: (model, msg, publish, options) => {
+            const button = msg.endpoints[0].epId;
+            if (button) {
+                return {click: `${button}_on`};
+            }
+        },
+    },
+    ZGRC013_cmdOff: {
+        cid: 'genOnOff',
+        type: 'cmdOff',
+        convert: (model, msg, publish, options) => {
+            const button = msg.endpoints[0].epId;
+            if (button) {
+                return {click: `${button}_off`};
+            }
+        },
+    },
+    ZGRC013_brightness: {
+        cid: 'genLevelCtrl',
+        type: 'cmdMove',
+        convert: (model, msg, publish, options) => {
+            const button = msg.endpoints[0].epId;
+            const direction = msg.data.data.movemode == 0 ? 'up' : 'down';
+            if (button) {
+                return {click: `${button}_${direction}`};
+            }
+        },
+    },
+    ZGRC013_brightness_onoff: {
+        cid: 'genLevelCtrl',
+        type: 'cmdMoveWithOnOff',
+        convert: (model, msg, publish, options) => {
+            const button = msg.endpoints[0].epId;
+            const direction = msg.data.data.movemode == 0 ? 'up' : 'down';
+            if (button) {
+                return {click: `${button}_${direction}`};
+            }
+        },
+    },
+    ZGRC013_brightness_stop: {
+        cid: 'genLevelCtrl',
+        type: 'cmdStopWithOnOff',
+        convert: (model, msg, publish, options) => {
+            const button = msg.endpoints[0].epId;
+            if (button) {
+                return {click: `${button}_stop`};
+            }
+        },
+    },
+    ZGRC013_scene: {
+        cid: 'genScenes',
+        type: 'cmdRecall',
+        convert: (model, msg, publish, options) => {
+            return {click: `scene_${msg.data.data.groupid}_${msg.data.data.sceneid}`};
         },
     },
 

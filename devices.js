@@ -10,8 +10,6 @@ const repInterval = {
     MINUTE: 60,
 };
 
-const coordinatorGroup = 99;
-
 const defaultIgnoreConverters = [
     fz.ignore_genGroups_devChange, fz.ignore_genIdentify_change, fz.ignore_genScenes_change,
     fz.ignore_diagnostic_change, fz.ignore_lightLink_change, fz.ignore_basic_change,
@@ -671,7 +669,6 @@ const devices = [
             };
 
             const actions = [
-                (cb) => device.bind('genOnOff', coordinatorGroup, cb),
                 (cb) => device.bind('genPowerCfg', coordinator, cb),
                 (cb) => device.foundation('genPowerCfg', 'configReport', [cfg], foundationCfg, cb),
             ];
@@ -1115,6 +1112,15 @@ const devices = [
         ep: (device) => {
             return {'bottom_left': 1, 'bottom_right': 2, 'top_left': 3, 'top_right': 4};
         },
+    },
+    {
+        zigbeeModel: ['ZigUP'],
+        model: 'ZigUP',
+        vendor: 'Custom devices (DiY)',
+        description: '[CC2530 based ZigBee relais, switch, sensor and router](https://github.com/formtapez/ZigUP/)',
+        supports: 'relais, RGB-stripe, sensors, S0-counter, ADC, digital I/O',
+        fromZigbee: [fz.ZigUP_parse, fz.ignore_onoff_change],
+        toZigbee: [tz.on_off, tz.light_color, tz.ZigUP_lock],
     },
 
     // eCozy
@@ -3251,6 +3257,13 @@ const devices = [
         description: 'A19 soft white bulb',
         extend: generic.light_onoff_brightness,
     },
+    {
+        zigbeeModel: ['zhaTunW'],
+        model: 'D1542',
+        vendor: 'EcoSmart',
+        description: 'GU10 adjustable white bulb',
+        extend: generic.light_onoff_brightness_colortemp,
+    },
 
     // Airam
     {
@@ -4016,6 +4029,30 @@ const devices = [
             fz.GIRA2430_up_hold, fz.GIRA2430_stop,
         ],
         toZigbee: [],
+    },
+
+    // RGB genie
+    {
+        zigbeeModel: ['ZGRC-KEY-013'],
+        model: 'ZGRC-KEY-013',
+        vendor: 'RGB Genie',
+        description: '3 Zone remote and dimmer',
+        supports: 'click',
+        fromZigbee: [
+            fz.generic_battery, fz.ZGRC013_brightness_onoff, fz.ZGRC013_brightness, fz.ZGRC013_brightness_stop,
+            fz.ZGRC013_cmdOn, fz.ZGRC013_cmdOff, fz.ZGRC013_scene,
+        ],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const cfg = {direction: 0, attrId: 0, dataType: 16, minRepIntval: 0, maxRepIntval: 1000, repChange: 0};
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.foundation('genOnOff', 'configReport', [cfg], foundationCfg, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
     },
 ];
 
