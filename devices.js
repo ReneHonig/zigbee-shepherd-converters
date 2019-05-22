@@ -3041,6 +3041,15 @@ const devices = [
         fromZigbee: [fz.cover_position_report, fz.cover_position, fz.cover_state_change, fz.cover_state_report],
         toZigbee: [tz.cover_position, tz.cover_open_close],
     },
+    {
+        zigbeeModel: ['PSM_00.00.00.35TC'],
+        model: 'PSM-29ZBSR',
+        vendor: 'Climax',
+        description: 'Power plug',
+        supports: 'on/off',
+        fromZigbee: [fz.state_report, fz.state_change],
+        toZigbee: [tz.on_off],
+    },
 
     // HEIMAN
     {
@@ -3563,6 +3572,29 @@ const devices = [
         },
     },
     {
+        zigbeeModel: ['YRD256 TSDB'],
+        model: 'YRD256HA20BP',
+        vendor: 'Yale',
+        description: 'Assure lock SL',
+        supports: 'lock/unlock, battery',
+        fromZigbee: [
+            fz.generic_lock,
+            fz.YMF40_lockstatus,
+            fz.battery_200,
+            fz.ignore_power_change,
+        ],
+        toZigbee: [tz.generic_lock],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.report('closuresDoorLock', 'lockState', 0, repInterval.HOUR, 0, cb),
+                (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, repInterval.MAX, 0, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+    {
         zigbeeModel: ['iZBModule01'],
         model: 'YMF40',
         vendor: 'Yale',
@@ -4053,6 +4085,51 @@ const devices = [
 
             execute(device, actions, callback);
         },
+    },
+
+    // Sercomm
+    {
+        zigbeeModel: ['SZ-ESW01-AU'],
+        model: 'SZ-ESW01-AU',
+        vendor: 'Sercomm',
+        description: 'Telstra smart plug',
+        supports: 'on/off, power consumption',
+        fromZigbee: [fz.state, fz.state_change, fz.SZ_ESW01_AU_power, fz.ignore_metering_change],
+        toZigbee: [tz.on_off],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const cfg = {direction: 0, attrId: 0, dataType: 16, minRepIntval: 0, maxRepIntval: 1000, repChange: 0};
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.foundation('genOnOff', 'configReport', [cfg], foundationCfg, cb),
+                (cb) => device.report('seMetering', 'instantaneousDemand', 10, 60, 1, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+
+    // Leedarson
+    {
+        zigbeeModel: ['LED_GU10_OWDT'],
+        model: 'ZM350STW1TCF',
+        vendor: 'Leedarson',
+        description: 'LED PAR16 50 GU10 tunable white',
+        extend: generic.light_onoff_brightness_colortemp,
+    },
+    {
+        zigbeeModel: ['M350ST-W1R-01'],
+        model: 'M350STW1',
+        vendor: 'Leedarson',
+        description: 'LED PAR16 50 GU10 tunable white',
+        extend: generic.light_onoff_brightness,
+    },
+    {
+        zigbeeModel: ['ZHA-DimmableLight'],
+        model: 'A806S-Q1R',
+        vendor: 'Leedarson',
+        description: 'LED E27 tunable white',
+        extend: generic.light_onoff_brightness,
     },
 ];
 
