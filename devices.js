@@ -864,6 +864,13 @@ const devices = [
         extend: hue.light_onoff_brightness_colortemp,
     },
     {
+        zigbeeModel: ['LTC013'],
+        model: '3216131P5',
+        vendor: 'Philips',
+        description: 'Hue white ambiance Aurelle square panel light',
+        extend: hue.light_onoff_brightness_colortemp,
+    },
+    {
         zigbeeModel: ['LTC015'],
         model: '3216331P5',
         vendor: 'Philips',
@@ -1363,6 +1370,14 @@ const devices = [
         },
 
     },
+    {
+        zigbeeModel: ['SubstiTube'],
+        model: 'ST8AU-CON',
+        vendor: 'OSRAM',
+        description: 'OSRAM SubstiTUBE T8 Advanced UO Connected',
+        extend: generic.light_onoff_brightness,
+    },
+
 
     // Hive
     {
@@ -2108,6 +2123,13 @@ const devices = [
         extend: generic.light_onoff_brightness,
     },
     {
+        zigbeeModel: ['FNB56-ZCW25FB1.9'],
+        model: 'XY12S-15',
+        vendor: 'Nue / 3A',
+        description: 'Smart light controller RGBW',
+        extend: generic.light_onoff_brightness_colortemp_colorxy,
+    },
+    {
         zigbeeModel: ['FNB56-ZSC01LX1.2'],
         model: 'HGZB-02A',
         vendor: 'Nue / 3A',
@@ -2842,7 +2864,8 @@ const devices = [
         supports: 'temperature, heating/cooling system control',
         fromZigbee: [
             fz.ignore_basic_change, fz.bitron_thermostat_att_report,
-            fz.bitron_thermostat_dev_change, fz.bitron_battery,
+            fz.bitron_thermostat_dev_change, fz.bitron_battery_att_report,
+            fz.bitron_battery_dev_change,
         ],
         toZigbee: [
             tz.thermostat_occupied_heating_setpoint, tz.thermostat_local_temperature_calibration,
@@ -3022,6 +3045,17 @@ const devices = [
         },
     },
 
+    // Blaupunkt
+    {
+        zigbeeModel: ['SCM-R_00.00.03.15TC'],
+        model: 'SCM-S1',
+        vendor: 'Blaupunkt',
+        description: 'Roller shutter',
+        supports: 'open/close',
+        fromZigbee: [fz.cover_position_report, fz.cover_position, fz.cover_state_change, fz.cover_state_report],
+        toZigbee: [tz.cover_position, tz.cover_open_close],
+    },
+
     // Climax
     {
         zigbeeModel: ['PSS_00.00.00.15TC'],
@@ -3053,6 +3087,15 @@ const devices = [
 
     // HEIMAN
     {
+        zigbeeModel: ['PIRSensor-N'],
+        model: 'HS3MS',
+        vendor: 'HEIMAN',
+        description: 'Smart motion sensor',
+        supports: 'occupancy',
+        fromZigbee: [fz.heiman_pir],
+        toZigbee: [],
+    },
+    {
         zigbeeModel: ['SmartPlug'],
         model: 'HS2SK',
         description: 'Smart metering plug',
@@ -3073,6 +3116,15 @@ const devices = [
 
             execute(device, actions, callback);
         },
+    },
+    {
+        zigbeeModel: ['WarningDevice'],
+        model: 'HS1WD',
+        description: 'Smart indoor light siren',
+        supports: 'on/off',
+        vendor: 'HEIMAN',
+        fromZigbee: [fz.state],
+        toZigbee: [tz.on_off],
     },
     {
         zigbeeModel: ['SMOK_V16', 'b5db59bfd81e4f1f95dc57fdbba17931', 'SMOK_YDLV10', 'SmokeSensor-EM'],
@@ -3139,7 +3191,16 @@ const devices = [
     },
     {
         zigbeeModel: ['DoorSensor-N'],
-        model: 'HS1DS',
+        model: 'HS1DS/HS3DS',
+        vendor: 'HEIMAN',
+        description: 'Door sensor',
+        supports: 'contact',
+        fromZigbee: [fz.heiman_contact],
+        toZigbee: [],
+    },
+    {
+        zigbeeModel: ['DOOR_TPV13'],
+        model: 'HEIMAN-M1',
         vendor: 'HEIMAN',
         description: 'Door sensor',
         supports: 'contact',
@@ -3166,7 +3227,7 @@ const devices = [
     },
     {
         zigbeeModel: ['WaterSensor-N'],
-        model: 'HS1WL',
+        model: 'HS1WL/HS3WL',
         vendor: 'HEIMAN',
         description: 'Water leakage sensor',
         supports: 'water leak',
@@ -3781,7 +3842,57 @@ const devices = [
         zigbeeModel: ['3043'],
         model: 'NCZ-3043-HA',
         vendor: 'Nyce',
-        description: 'Motion sensor',
+        description: 'Ceiling motion sensor',
+        supports: 'motion, humidity and temperature',
+        fromZigbee: [
+            fz.generic_occupancy, fz.xiaomi_humidity, fz.generic_temperature, fz.ignore_basic_report,
+            fz.ignore_genIdentify, fz.ignore_basic_change, fz.ignore_poll_ctrl,
+            fz.generic_temperature_change, fz.generic_battery_change, fz.ignore_humidity_change,
+            fz.ignore_iaszone_change,
+            fz.ignore_poll_ctrl_change, fz.ignore_genIdentify_change, fz.ignore_iaszone_report,
+            fz.ias_zone_motion_status_change, fz.generic_battery, fz.generic_battery_change,
+        ],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 255}, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+    {
+        zigbeeModel: ['3041'],
+        model: 'NCZ-3041-HA',
+        vendor: 'Nyce',
+        description: 'Wall motion sensor',
+        supports: 'motion, humidity and temperature',
+        fromZigbee: [
+            fz.generic_occupancy, fz.xiaomi_humidity, fz.generic_temperature, fz.ignore_basic_report,
+            fz.ignore_genIdentify, fz.ignore_basic_change, fz.ignore_poll_ctrl,
+            fz.generic_temperature_change, fz.generic_battery_change, fz.ignore_humidity_change,
+            fz.ignore_iaszone_change,
+            fz.ignore_poll_ctrl_change, fz.ignore_genIdentify_change, fz.ignore_iaszone_report,
+            fz.ias_zone_motion_status_change, fz.generic_battery, fz.generic_battery_change,
+        ],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 255}, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+    {
+        zigbeeModel: ['3045'],
+        model: 'NCZ-3045-HA',
+        vendor: 'Nyce',
+        description: 'Curtain motion sensor',
         supports: 'motion, humidity and temperature',
         fromZigbee: [
             fz.generic_occupancy, fz.xiaomi_humidity, fz.generic_temperature, fz.ignore_basic_report,
@@ -4130,6 +4241,15 @@ const devices = [
         vendor: 'Leedarson',
         description: 'LED E27 tunable white',
         extend: generic.light_onoff_brightness,
+    },
+
+    // GMY
+    {
+        zigbeeModel: ['CCT box'],
+        model: 'B07KG5KF5R',
+        vendor: 'GMY Smart Bulb',
+        description: 'GMY Smart bulb, 470lm, vintage dimmable, 2700-6500k, E27',
+        extend: generic.light_onoff_brightness_colortemp,
     },
 ];
 
