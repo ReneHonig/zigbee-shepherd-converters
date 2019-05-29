@@ -152,7 +152,7 @@ const converters = {
             return {state: msg.data.data.lockState === 2 ? 'UNLOCK' : 'LOCK'};
         },
     },
-    YMF40_lockstatus: {
+    generic_lock_operation_event: {
         cid: 'closuresDoorLock',
         type: 'cmdOperationEventNotification',
         convert: (model, msg, publish, options) => {
@@ -1241,6 +1241,17 @@ const converters = {
             return {
                 contact: (zoneStatus & 1) > 0, // Bit 1 = Alarm: Contact detection
                 tamper: (zoneStatus & 1<<2) > 0, // Bit 3 = Tamper status
+                battery_low: (zoneStatus & 1<<3) > 0, // Bit 4 = Battery LOW indicator
+            };
+        },
+    },
+    heiman_carbon_monoxide: {
+        cid: 'ssIasZone',
+        type: 'statusChange',
+        convert: (model, msg, publish, options) => {
+            const zoneStatus = msg.data.zoneStatus;
+            return {
+                carbon_monoxide: (zoneStatus & 1) > 0, // Bit 1 = Alarm: Carbon monoxide
                 battery_low: (zoneStatus & 1<<3) > 0, // Bit 4 = Battery LOW indicator
             };
         },
@@ -2594,7 +2605,67 @@ const converters = {
             }
         },
     },
+    meazon_meter: {
+        cid: 'seMetering',
+        type: ['attReport', 'readRsp'],
+        convert: (model, msg, publish, options) => {
+            const result = {};
+            // typo on property name to stick with zcl definition
+            if (msg.data.data.hasOwnProperty('inletTempreature')) {
+                result.inletTemperature = precisionRound(msg.data.data['inletTempreature'], 2);
+            }
 
+            if (msg.data.data.hasOwnProperty('status')) {
+                result.status = precisionRound(msg.data.data['status'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8192')) {
+                result.linefrequency = precisionRound((parseFloat(msg.data.data['8192'])) / 100.0, 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8193')) {
+                result.power = precisionRound(msg.data.data['8193'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8196')) {
+                result.voltage = precisionRound(msg.data.data['8196'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8213')) {
+                result.voltage = precisionRound(msg.data.data['8213'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8199')) {
+                result.current = precisionRound(msg.data.data['8199'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8216')) {
+                result.current = precisionRound(msg.data.data['8216'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('8202')) {
+                result.reactivepower = precisionRound(msg.data.data['8202'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('12288')) {
+                result.energyconsumed = precisionRound(msg.data.data['12288'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('12291')) {
+                result.energyproduced = precisionRound(msg.data.data['12291'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('12294')) {
+                result.reactivesummation = precisionRound(msg.data.data['12294'], 2);
+            }
+
+            if (msg.data.data.hasOwnProperty('16408')) {
+                result.measureserial = precisionRound(msg.data.data['16408'], 2);
+            }
+
+            return result;
+        },
+    },
     // Ignore converters (these message dont need parsing).
     ignore_fan_change: {
         cid: 'hvacFanCtrl',
@@ -2829,6 +2900,11 @@ const converters = {
     ignore_lightLink_change: {
         cid: 'lightLink',
         type: 'devChange',
+        convert: (model, msg, publish, options) => null,
+    },
+    ignore_genLevelCtrl_report: {
+        cid: 'genLevelCtrl',
+        type: 'attReport',
         convert: (model, msg, publish, options) => null,
     },
 };

@@ -610,7 +610,7 @@ const devices = [
         description: 'TRADFRI control outlet',
         supports: 'on/off',
         vendor: 'IKEA',
-        fromZigbee: [fz.ignore_onoff_change, fz.state],
+        fromZigbee: [fz.ignore_onoff_change, fz.state, fz.ignore_genLevelCtrl_report],
         toZigbee: [tz.on_off],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
@@ -1129,6 +1129,18 @@ const devices = [
         fromZigbee: [fz.ZigUP_parse, fz.ignore_onoff_change],
         toZigbee: [tz.on_off, tz.light_color, tz.ZigUP_lock],
     },
+    {
+        zigbeeModel: ['DIYRUZ_R4_5'],
+        model: 'DIYRUZ_R4_5',
+        vendor: 'Custom devices (DiY)',
+        description: '[DiY 4 Relays + 4 switches + 1 buzzer](http://modkam.ru/?p=1054)',
+        supports: 'on/off',
+        fromZigbee: [fz.DNCKAT_S00X_state],
+        toZigbee: [tz.on_off],
+        ep: (device) => {
+            return {'bottom_left': 1, 'bottom_right': 2, 'top_left': 3, 'top_right': 4, 'center': 5};
+        },
+    },
 
     // eCozy
     {
@@ -1209,7 +1221,9 @@ const devices = [
         model: 'AA68199',
         vendor: 'OSRAM',
         description: 'LIGHTIFY LED PAR16 50 GU10 tunable white',
-        extend: generic.light_onoff_brightness_colortemp,
+        supports: generic.light_onoff_brightness_colortemp.supports,
+        toZigbee: generic.light_onoff_brightness_colortemp.toZigbee.concat([tz.osram_cmds]),
+        fromZigbee: generic.light_onoff_brightness_colortemp.fromZigbee,
     },
     {
         zigbeeModel: ['Classic B40 TW - LIGHTIFY'],
@@ -1520,21 +1534,28 @@ const devices = [
         zigbeeModel: ['RB 145'],
         model: 'RB 145',
         vendor: 'Innr',
-        description: 'E14 Candle',
+        description: 'E14 candle',
+        extend: generic.light_onoff_brightness,
+    },
+    {
+        zigbeeModel: ['RB 245'],
+        model: 'RB 245',
+        vendor: 'Innr',
+        description: 'E14 candle',
         extend: generic.light_onoff_brightness,
     },
     {
         zigbeeModel: ['RB 248 T'],
         model: 'RB 248 T',
         vendor: 'Innr',
-        description: 'E14 Candle with white spectrum',
+        description: 'E14 candle with white spectrum',
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
         zigbeeModel: ['BY 165', 'BY 265'],
         model: 'BY 165',
         vendor: 'Innr',
-        description: 'B22 Bulb dimmable',
+        description: 'B22 bulb dimmable',
         extend: generic.light_onoff_brightness,
     },
     {
@@ -1555,7 +1576,7 @@ const devices = [
         zigbeeModel: ['UC 110'],
         model: 'UC 110',
         vendor: 'Innr',
-        description: 'Under Cabinet Light',
+        description: 'Under cabinet light',
         extend: generic.light_onoff_brightness,
     },
     {
@@ -3087,6 +3108,28 @@ const devices = [
 
     // HEIMAN
     {
+        zigbeeModel: ['CO_V15'],
+        model: 'HS1CA-M',
+        description: 'Smart carbon monoxide sensor',
+        supports: 'carbon monoxide',
+        vendor: 'HEIMAN',
+        fromZigbee: [fz.heiman_carbon_monoxide, fz.battery_200, fz.ignore_power_change],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.bind('ssIasZone', coordinator, cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, cb),
+                (cb) => device.bind('genPowerCfg', coordinator, cb),
+                // Time is in seconds. 65535 means no report. 65534 is max value: 18 hours, 12 minutes 14 seconds.
+                (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, 65534, 0, cb),
+                (cb) => device.report('genPowerCfg', 'batteryAlarmState', 1, 65534, 1, cb),
+            ];
+
+            execute(device, actions, callback, 1000);
+        },
+    },
+    {
         zigbeeModel: ['PIRSensor-N'],
         model: 'HS3MS',
         vendor: 'HEIMAN',
@@ -3602,7 +3645,7 @@ const devices = [
         vendor: 'Yale',
         description: 'Assure lock',
         supports: 'lock/unlock, battery',
-        fromZigbee: [fz.generic_lock, fz.battery_200],
+        fromZigbee: [fz.generic_lock, fz.generic_lock_operation_event, fz.battery_200],
         toZigbee: [tz.generic_lock],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
@@ -3640,7 +3683,7 @@ const devices = [
         supports: 'lock/unlock, battery',
         fromZigbee: [
             fz.generic_lock,
-            fz.YMF40_lockstatus,
+            fz.generic_lock_operation_event,
             fz.battery_200,
             fz.ignore_power_change,
         ],
@@ -3661,7 +3704,7 @@ const devices = [
         vendor: 'Yale',
         description: 'Real living lock',
         supports: 'lock/unlock, battery',
-        fromZigbee: [fz.YMF40_lockstatus],
+        fromZigbee: [fz.generic_lock_operation_event],
         toZigbee: [tz.generic_lock],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
@@ -3838,6 +3881,30 @@ const devices = [
     },
 
     // Nyce
+    {
+        zigbeeModel: ['3011'],
+        model: 'NCZ-3011-HA',
+        vendor: 'Nyce',
+        description: 'Door/window sensor',
+        supports: 'motion, humidity and temperature',
+        fromZigbee: [
+            fz.ignore_basic_report,
+            fz.ignore_genIdentify, fz.ignore_basic_change, fz.ignore_poll_ctrl,
+            fz.generic_battery_change, fz.ignore_iaszone_change,
+            fz.ignore_poll_ctrl_change, fz.ignore_genIdentify_change, fz.ignore_iaszone_report,
+            fz.ias_zone_motion_status_change, fz.generic_battery, fz.ias_contact_status_change,
+        ],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 255}, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
     {
         zigbeeModel: ['3043'],
         model: 'NCZ-3043-HA',
@@ -4250,6 +4317,71 @@ const devices = [
         vendor: 'GMY Smart Bulb',
         description: 'GMY Smart bulb, 470lm, vintage dimmable, 2700-6500k, E27',
         extend: generic.light_onoff_brightness_colortemp,
+    },
+
+    // Meazon
+    {
+        zigbeeModel: [
+            '101.301.001649', '101.301.001838', '101.301.001802', '101.301.001738',
+            '101.301.001412', '101.301.001765', '101.301.001814',
+        ],
+        model: 'MEAZON_BIZY_PLUG',
+        vendor: 'Meazon',
+        description: 'Bizy plug meter',
+        supports: 'on/off, power, energy measurement and temperature',
+        fromZigbee: [
+            fz.genOnOff_cmdOn, fz.genOnOff_cmdOff, fz.state, fz.ignore_onoff_change,
+            fz.meazon_meter, fz.ignore_metering_change,
+        ],
+        toZigbee: [tz.on_off],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 10);
+            const onOff = {direction: 0, attrId: 0, dataType: 0x10, minRepIntval: 0x0001, maxRepIntval: 0xfffe};
+            const linefrequency = {direction: 0, attrId: 0x2000, dataType: 0x29, minRepIntval: 0x0001,
+                maxRepIntval: 300, repChange: 1};
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.foundation('genOnOff', 'configReport', [onOff], foundationCfg, cb),
+                (cb) => device.bind('seMetering', coordinator, cb),
+                (cb) => device.foundation('seMetering', 'write',
+                    [{attrId: 0x1005, dataType: 25, attrData: 0x063e}],
+                    {manufSpec: 1, disDefaultRsp: 0, manufCode: 4406}, cb),
+                (cb) => device.foundation('seMetering', 'configReport', [linefrequency],
+                    {manufSpec: 1, disDefaultRsp: 0, manufCode: 4406}, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+    {
+        zigbeeModel: ['102.106.000235', '102.106.001111', '102.106.000348', '102.106.000256', '102.106.001242'],
+        model: 'MEAZON_DINRAIL',
+        vendor: 'Meazon',
+        description: 'DinRail 1-phase meter',
+        supports: 'on/off, power, energy measurement and temperature',
+        fromZigbee: [
+            fz.genOnOff_cmdOn, fz.genOnOff_cmdOff, fz.state, fz.ignore_onoff_change,
+            fz.meazon_meter, fz.ignore_metering_change,
+        ],
+        toZigbee: [tz.on_off],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 10);
+            const onOff = {direction: 0, attrId: 0, dataType: 0x10, minRepIntval: 0x0001, maxRepIntval: 0xfffe};
+            const linefrequency = {direction: 0, attrId: 0x2000, dataType: 0x29, minRepIntval: 0x0001,
+                maxRepIntval: 300, repChange: 1};
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.foundation('genOnOff', 'configReport', [onOff], foundationCfg, cb),
+                (cb) => device.bind('seMetering', coordinator, cb),
+                (cb) => device.foundation('seMetering', 'write',
+                    [{attrId: 0x1005, dataType: 25, attrData: 0x063e}],
+                    {manufSpec: 1, disDefaultRsp: 0, manufCode: 4406}, cb),
+                (cb) => device.foundation('seMetering', 'configReport', [linefrequency],
+                    {manufSpec: 1, disDefaultRsp: 0, manufCode: 4406}, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
     },
 ];
 
