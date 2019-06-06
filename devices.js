@@ -1216,6 +1216,13 @@ const devices = [
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
+        zigbeeModel: ['CLA60 RGBW Z3'],
+        model: 'AC03647',
+        vendor: 'OSRAM',
+        description: 'SMART+ LED CLASSIC E27 RGBW',
+        extend: generic.light_onoff_brightness_colortemp_colorxy,
+    },
+    {
         // AA70155 is model number of both bulbs.
         zigbeeModel: ['LIGHTIFY A19 Tunable White', 'Classic A60 TW'],
         model: 'AA70155',
@@ -3346,11 +3353,18 @@ const devices = [
 
     // Calex
     {
-        zigbeeModel: ['EC-Z3.0-CCT '],
+        zigbeeModel: ['EC-Z3.0-CCT'],
         model: '421786',
         vendor: 'Calex',
         description: 'LED A60 Zigbee GLS-lamp',
         extend: generic.light_onoff_brightness,
+    },
+    {
+        zigbeeModel: ['EC-Z3.0-RGBW'],
+        model: '421792',
+        vendor: 'Calex',
+        description: 'LED A60 Zigbee RGB lamp',
+        extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
 
     // EcoSmart
