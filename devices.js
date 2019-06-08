@@ -215,7 +215,8 @@ const devices = [
         zigbeeModel: ['lumi.ctrl_neutral1'],
         model: 'QBKG04LM',
         vendor: 'Xiaomi',
-        description: 'Aqara single key wired wall switch',
+        // eslint-disable-next-line
+        description: 'Aqara single key wired wall switch without neutral wire. Doesn\'t work as a router and doesn\'t support power meter',
         supports: 'on/off',
         fromZigbee: [
             fz.QBKG04LM_QBKG11LM_state, fz.ignore_onoff_change,
@@ -243,7 +244,8 @@ const devices = [
         zigbeeModel: ['lumi.ctrl_neutral2'],
         model: 'QBKG03LM',
         vendor: 'Xiaomi',
-        description: 'Aqara double key wired wall switch',
+        // eslint-disable-next-line
+        description: 'Aqara double key wired wall switch without neutral wire. Doesn\'t work as a router and doesn\'t support power meter',
         supports: 'release/hold, on/off',
         fromZigbee: [
             fz.QBKG03LM_QBKG12LM_LLKZMK11LM_state, fz.QBKG03LM_buttons,
@@ -274,7 +276,7 @@ const devices = [
         zigbeeModel: ['lumi.sens'],
         model: 'WSDCGQ01LM',
         vendor: 'Xiaomi',
-        description: 'MiJia temperature & humidity sensor ',
+        description: 'MiJia temperature & humidity sensor',
         supports: 'temperature and humidity',
         fromZigbee: [
             fz.xiaomi_battery_3v, fz.WSDCGQ01LM_WSDCGQ11LM_interval, fz.xiaomi_temperature, fz.xiaomi_humidity,
@@ -606,7 +608,7 @@ const devices = [
     },
     {
         zigbeeModel: ['TRADFRI control outlet'],
-        model: 'E1603',
+        model: 'E1603/E1702',
         description: 'TRADFRI control outlet',
         supports: 'on/off',
         vendor: 'IKEA',
@@ -656,7 +658,7 @@ const devices = [
         model: 'E1743',
         vendor: 'IKEA',
         description: 'TRADFRI ON/OFF switch',
-        supports: 'on, off',
+        supports: 'on, off, brightness up/down/stop',
         fromZigbee: [
             fz.genOnOff_cmdOn, fz.genOnOff_cmdOff, fz.E1743_brightness_up, fz.E1743_brightness_down,
             fz.E1743_brightness_stop, fz.generic_battery, fz.ignore_power_change,
@@ -1021,6 +1023,13 @@ const devices = [
         vendor: 'Philips',
         description: 'LivingColors Aura',
         extend: hue.light_onoff_brightness_colorxy,
+    },
+    {
+        zigbeeModel: ['LTC014'],
+        model: '3216231P5',
+        vendor: 'Philips',
+        description: 'Hue white ambiance Aurelle rectangle panel light',
+        extend: hue.light_onoff_brightness_colortemp,
     },
 
     // Belkin
