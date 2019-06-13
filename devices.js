@@ -706,7 +706,7 @@ const devices = [
         description: 'TRADFRI signal repeater',
         supports: '',
         vendor: 'IKEA',
-        fromZigbee: [],
+        fromZigbee: [fz.ignore_basic_change, fz.ignore_diagnostic_change],
         toZigbee: [],
     },
 
@@ -1453,6 +1453,13 @@ const devices = [
             execute(device, actions, callback);
         },
     },
+    {
+        zigbeeModel: ['TWBulb01US'],
+        model: 'HV-GSCXZB269',
+        vendor: 'Hive',
+        description: 'Active light cool to warm white (E26) ',
+        extend: generic.light_onoff_brightness_colortemp,
+    },
 
     // Innr
     {
@@ -2080,7 +2087,7 @@ const devices = [
         },
     },
     {
-        zigbeeModel: ['FB56+ZSW1IKJ1.7'],
+        zigbeeModel: ['FB56+ZSW1IKJ1.7', 'FB56+ZSW1IKJ2.5'],
         model: 'HGZB-043',
         vendor: 'Nue / 3A',
         description: 'Smart light switch - 3 gang',
@@ -3100,6 +3107,17 @@ const devices = [
         toZigbee: [tz.cover_position, tz.cover_open_close],
     },
 
+    // Lupus
+    {
+        zigbeeModel: ['SCM_00.00.03.11TC'],
+        model: '12031',
+        vendor: 'Lupus',
+        description: 'Roller shutter',
+        supports: 'open/close',
+        fromZigbee: [fz.cover_position_report, fz.cover_position, fz.cover_state_change, fz.cover_state_report],
+        toZigbee: [tz.cover_position, tz.cover_open_close],
+    },
+
     // Climax
     {
         zigbeeModel: ['PSS_00.00.00.15TC'],
@@ -3182,15 +3200,6 @@ const devices = [
 
             execute(device, actions, callback);
         },
-    },
-    {
-        zigbeeModel: ['WarningDevice'],
-        model: 'HS1WD',
-        description: 'Smart indoor light siren',
-        supports: 'on/off',
-        vendor: 'HEIMAN',
-        fromZigbee: [fz.state],
-        toZigbee: [tz.on_off],
     },
     {
         zigbeeModel: ['SMOK_V16', 'b5db59bfd81e4f1f95dc57fdbba17931', 'SMOK_YDLV10', 'SmokeSensor-EM'],
@@ -3334,6 +3343,28 @@ const devices = [
             const actions = [
                 (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
                 (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, cb),
+            ];
+
+            execute(device, actions, callback, 1000);
+        },
+    },
+    {
+        zigbeeModel: ['COSensor-EM'],
+        model: 'HS1CA-E',
+        vendor: 'HEIMAN',
+        description: 'Smart carbon monoxide sensor',
+        supports: 'carbon monoxide',
+        fromZigbee: [fz.heiman_carbon_monoxide, fz.battery_200, fz.ignore_power_change, fz.ignore_basic_change],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.bind('ssIasZone', coordinator, cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, cb),
+                (cb) => device.bind('genPowerCfg', coordinator, cb),
+                // Time is in seconds. 65535 means no report. 65534 is max value: 18 hours, 12 minutes 14 seconds.
+                (cb) => device.report('genPowerCfg', 'batteryPercentageRemaining', 0, 65534, 0, cb),
+                (cb) => device.report('genPowerCfg', 'batteryAlarmState', 1, 65534, 1, cb),
             ];
 
             execute(device, actions, callback, 1000);
