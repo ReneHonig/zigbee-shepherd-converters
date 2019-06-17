@@ -217,9 +217,9 @@ const devices = [
         vendor: 'Xiaomi',
         // eslint-disable-next-line
         description: 'Aqara single key wired wall switch without neutral wire. Doesn\'t work as a router and doesn\'t support power meter',
-        supports: 'on/off',
+        supports: 'release/hold, on/off',
         fromZigbee: [
-            fz.QBKG04LM_QBKG11LM_state, fz.ignore_onoff_change,
+            fz.QBKG04LM_QBKG11LM_state, fz.QBKG04LM_buttons,
             fz.QBKG04LM_QBKG11LM_operation_mode, fz.ignore_basic_report,
         ],
         toZigbee: [tz.on_off, tz.xiaomi_switch_operation_mode],
@@ -506,6 +506,13 @@ const devices = [
         model: 'LED1536G5',
         vendor: 'IKEA',
         description: 'TRADFRI LED bulb E12/E14 400 lumen, dimmable, white spectrum, opal white',
+        extend: generic.light_onoff_brightness_colortemp,
+    },
+    {
+        zigbeeModel: ['TRADFRI bulb E14 WS opal 600lm'],
+        model: 'LED1733G7',
+        vendor: 'IKEA',
+        description: 'TRADFRI LED bulb E14 600 lumen, dimmable, white spectrum, opal white',
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
@@ -1818,7 +1825,7 @@ const devices = [
         vendor: 'GE',
         description: 'Plug-in smart switch',
         supports: 'on/off',
-        fromZigbee: [fz.state, fz.ignore_onoff_change],
+        fromZigbee: [fz.state, fz.ignore_onoff_change, fz.generic_power, fz.ignore_metering_change],
         toZigbee: [tz.on_off, tz.ignore_transition],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const cfg = {direction: 0, attrId: 0, dataType: 16, minRepIntval: 0, maxRepIntval: 1000, repChange: 0};
@@ -1826,6 +1833,7 @@ const devices = [
             const actions = [
                 (cb) => device.bind('genOnOff', coordinator, cb),
                 (cb) => device.foundation('genOnOff', 'configReport', [cfg], foundationCfg, cb),
+                (cb) => device.report('seMetering', 'instantaneousDemand', 10, 60, 1, cb),
             ];
 
             execute(device, actions, callback);
@@ -2195,6 +2203,13 @@ const devices = [
         supports: 'on/off',
         fromZigbee: [fz.ignore_onoff_change, fz.state],
         toZigbee: [tz.on_off],
+    },
+    {
+        zigbeeModel: ['FNB56-ZCW25FB1.6'],
+        model: 'HGZB-06A',
+        vendor: 'Nue / 3A',
+        description: 'Smart 7W E27 light bulb',
+        extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
 
     // Smart Home Pty
