@@ -273,7 +273,7 @@ const devices = [
         },
     },
     {
-        zigbeeModel: ['lumi.sens'],
+        zigbeeModel: ['lumi.sens', 'lumi.sensor_ht'],
         model: 'WSDCGQ01LM',
         vendor: 'Xiaomi',
         description: 'MiJia temperature & humidity sensor',
@@ -901,6 +901,13 @@ const devices = [
         extend: hue.light_onoff_brightness_colortemp,
     },
     {
+        zigbeeModel: ['LWF002'],
+        model: '9290011370B',
+        vendor: 'Philips',
+        description: 'Hue white A60 bulb E27',
+        extend: hue.light_onoff_brightness,
+    },
+    {
         zigbeeModel: ['LWB015'],
         model: '046677476816',
         vendor: 'Philips',
@@ -963,7 +970,7 @@ const devices = [
             fz.ignore_occupancy_change, fz.generic_illuminance, fz.ignore_illuminance_change,
             fz.ignore_temperature_change,
         ],
-        toZigbee: [tz.occupancy_timeout],
+        toZigbee: [tz.occupancy_timeout, tz.hue_motion_sensitivity],
         ep: (device) => {
             return {
                 '': 2, // default
@@ -999,7 +1006,7 @@ const devices = [
             fz.ignore_occupancy_change, fz.generic_illuminance, fz.ignore_illuminance_change,
             fz.ignore_temperature_change,
         ],
-        toZigbee: [tz.occupancy_timeout],
+        toZigbee: [tz.occupancy_timeout, tz.hue_motion_sensitivity],
         ep: (device) => {
             return {
                 '': 2, // default
@@ -4270,6 +4277,9 @@ const devices = [
             ];
 
             execute(device, actions, callback);
+        },
+        options: {
+            apsNoAck: true,
         },
     },
 
