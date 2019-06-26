@@ -894,7 +894,7 @@ const devices = [
         extend: hue.light_onoff_brightness_colortemp,
     },
     {
-        zigbeeModel: ['LTP003'],
+        zigbeeModel: ['LTP003', 'LTP001'],
         model: '4033930P7',
         vendor: 'Philips',
         description: 'Hue white ambiance suspension Fair',
@@ -4188,7 +4188,7 @@ const devices = [
         vendor: 'Danalock',
         description: 'BT/ZB smartlock',
         supports: 'lock/unlock, battery',
-        fromZigbee: [fz.generic_lock, fz.battery_200],
+        fromZigbee: [fz.generic_lock, fz.generic_lock_operation_event, fz.battery_200],
         toZigbee: [tz.generic_lock],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
