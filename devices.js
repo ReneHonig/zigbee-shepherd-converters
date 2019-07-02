@@ -1045,6 +1045,13 @@ const devices = [
         description: 'Hue white ambiance Aurelle rectangle panel light',
         extend: hue.light_onoff_brightness_colortemp,
     },
+    {
+        zigbeeModel: ['1744530P7'],
+        model: '8718696170625',
+        vendor: 'Philips',
+        description: 'Hue Fuzo outdoor wall light',
+        extend: hue.light_onoff_brightness,
+    },
 
     // Belkin
     {
@@ -1480,56 +1487,63 @@ const devices = [
         zigbeeModel: ['RB 185 C'],
         model: 'RB 185 C',
         vendor: 'Innr',
-        description: 'E27 Bulb RGBW',
+        description: 'E27 bulb RGBW',
         extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
     {
         zigbeeModel: ['BY 185 C'],
         model: 'BY 185 C',
         vendor: 'Innr',
-        description: 'B22 Bulb RGBW',
+        description: 'B22 bulb RGBW',
+        extend: generic.light_onoff_brightness_colortemp_colorxy,
+    },
+    {
+        zigbeeModel: ['RB 250 C'],
+        model: 'RB 250 C',
+        vendor: 'Innr',
+        description: 'E14 bulb RGBW',
         extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
     {
         zigbeeModel: ['RB 265'],
         model: 'RB 265',
         vendor: 'Innr',
-        description: 'E27 Bulb',
+        description: 'E27 bulb',
         extend: generic.light_onoff_brightness,
     },
     {
         zigbeeModel: ['RB 278 T'],
         model: 'RB 278 T',
         vendor: 'Innr',
-        description: 'E27 Bulb',
+        description: 'E27 bulb',
         extend: generic.light_onoff_brightness,
     },
     {
         zigbeeModel: ['RB 285 C'],
         model: 'RB 285 C',
         vendor: 'Innr',
-        description: 'E27 Bulb RGBW',
+        description: 'E27 bulb RGBW',
         extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
     {
         zigbeeModel: ['BY 285 C'],
         model: 'BY 285 C',
         vendor: 'Innr',
-        description: 'B22 Bulb RGBW',
+        description: 'B22 bulb RGBW',
         extend: generic.light_onoff_brightness_colortemp_colorxy,
     },
     {
         zigbeeModel: ['RB 165'],
         model: 'RB 165',
         vendor: 'Innr',
-        description: 'E27 Bulb',
+        description: 'E27 bulb',
         extend: generic.light_onoff_brightness,
     },
     {
         zigbeeModel: ['RB 175 W'],
         model: 'RB 175 W',
         vendor: 'Innr',
-        description: 'E27 Bulb warm dimming',
+        description: 'E27 bulb warm dimming',
         extend: generic.light_onoff_brightness,
     },
     {
@@ -1543,14 +1557,14 @@ const devices = [
         zigbeeModel: ['RS 122'],
         model: 'RS 122',
         vendor: 'Innr',
-        description: 'GU10 Spot',
+        description: 'GU10 spot',
         extend: generic.light_onoff_brightness,
     },
     {
         zigbeeModel: ['RS 125'],
         model: 'RS 125',
         vendor: 'Innr',
-        description: 'GU10 Spot',
+        description: 'GU10 spot',
         extend: generic.light_onoff_brightness,
     },
     {
@@ -1564,14 +1578,14 @@ const devices = [
         zigbeeModel: ['RS 128 T'],
         model: 'RS 128 T',
         vendor: 'Innr',
-        description: 'GU10 Spot 350 lm, dimmable, white spectrum',
+        description: 'GU10 spot 350 lm, dimmable, white spectrum',
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
         zigbeeModel: ['RS 228 T'],
         model: 'RS 228 T',
         vendor: 'Innr',
-        description: 'GU10 Spot 350 lm, dimmable, white spectrum',
+        description: 'GU10 spot 350 lm, dimmable, white spectrum',
         extend: generic.light_onoff_brightness_colortemp,
     },
     {
@@ -2152,6 +2166,25 @@ const devices = [
         },
     },
     {
+        zigbeeModel: ['FNB56-ZSW02LX2.0'],
+        model: 'HGZB-42',
+        vendor: 'Nue / 3A',
+        description: 'Smart light switch - 2 gang. ',
+        supports: 'on/off',
+        fromZigbee: [fz.generic_state_multi_ep, fz.ignore_onoff_change],
+        toZigbee: [tz.on_off],
+        ep: (device) => {
+            return {'top': 11, 'bottom': 12};
+        },
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const ep11 = shepherd.find(ieeeAddr, 11);
+            execute(ep11, [(cb) => ep11.bind('genOnOff', coordinator, cb)], () => {
+                const ep12 = shepherd.find(ieeeAddr, 12);
+                execute(ep12, [(cb) => ep12.bind('genOnOff', coordinator, cb)], callback);
+            });
+        },
+    },
+    {
         zigbeeModel: ['FB56+ZSW05HG1.2'],
         model: 'HGZB-01A/02A',
         vendor: 'Nue / 3A',
@@ -2317,6 +2350,22 @@ const devices = [
         model: 'GL-B-001Z',
         vendor: 'Gledopto',
         description: 'Smart 4W E14 RGB / CW LED bulb',
+        extend: gledopto.light_onoff_brightness_colortemp_colorxy,
+        ep: (device) => {
+            if (device.epList.toString() === '11,12,13') {
+                return {'': 12};
+            } else if (device.epList.toString() === '10,11,13' || device.epList.toString() === '11,13') {
+                return {'': 11};
+            } else {
+                return {};
+            }
+        },
+    },
+    {
+        zigbeeModel: ['GL-G-001Z'],
+        model: 'GL-G-001Z',
+        vendor: 'Gledopto',
+        description: 'Smart garden lamp',
         extend: gledopto.light_onoff_brightness_colortemp_colorxy,
         ep: (device) => {
             if (device.epList.toString() === '11,12,13') {
@@ -3813,16 +3862,55 @@ const devices = [
         description: 'Smart vent',
         supports: 'open, close, position, temperature, pressure, battery',
         fromZigbee: [
-            fz.cover_position,
-            fz.cover_position_report,
-            fz.generic_temperature,
-            fz.generic_temperature_change,
-            fz.generic_battery,
-            fz.generic_battery_change,
-            fz.keen_home_smart_vent_pressure,
-            fz.keen_home_smart_vent_pressure_report,
-            fz.ignore_onoff_change,
-            fz.ignore_onoff_report,
+            fz.cover_position, fz.cover_position_report, fz.generic_temperature, fz.generic_temperature_change,
+            fz.generic_battery, fz.generic_battery_change, fz.keen_home_smart_vent_pressure,
+            fz.keen_home_smart_vent_pressure_report, fz.ignore_onoff_change, fz.ignore_onoff_report,
+        ],
+        toZigbee: [
+            tz.cover_open_close,
+            tz.cover_position,
+        ],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.bind('genLevelCtrl', coordinator, cb),
+                (cb) => device.bind('genPowerCfg', coordinator, cb),
+                (cb) => device.bind('msTemperatureMeasurement', coordinator, cb),
+                (cb) => device.bind('msPressureMeasurement', coordinator, cb),
+
+                // eslint-disable-next-line
+                // https://github.com/yracine/keenhome.device-type/blob/master/devicetypes/keensmartvent.src/keensmartvent.groovy
+                (cb) => device.report(
+                    'msTemperatureMeasurement', 'measuredValue', repInterval.MINUTE * 2, repInterval.HOUR, 50, cb
+                ),
+                (cb) => device.foundation(
+                    'msPressureMeasurement',
+                    'configReport',
+                    [{
+                        direction: 0, attrId: 32, dataType: 34, minRepIntval: repInterval.MINUTE * 5,
+                        maxRepIntval: repInterval.HOUR, repChange: 500,
+                    }],
+                    {manufSpec: 1, manufCode: 4443},
+                    cb
+                ),
+                (cb) => device.report(
+                    'genPowerCfg', 'batteryPercentageRemaining', repInterval.HOUR, repInterval.HOUR * 12, 0, cb
+                ),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+    {
+        zigbeeModel: ['SV02-410-MP-1.3'],
+        model: 'SV02',
+        vendor: 'Keen Home',
+        description: 'Smart vent',
+        supports: 'open, close, position, temperature, pressure, battery',
+        fromZigbee: [
+            fz.cover_position, fz.cover_position_report, fz.generic_temperature, fz.generic_temperature_change,
+            fz.generic_battery, fz.generic_battery_change, fz.keen_home_smart_vent_pressure,
+            fz.keen_home_smart_vent_pressure_report, fz.ignore_onoff_change, fz.ignore_onoff_report,
         ],
         toZigbee: [
             tz.cover_open_close,
@@ -4188,7 +4276,7 @@ const devices = [
         vendor: 'Danalock',
         description: 'BT/ZB smartlock',
         supports: 'lock/unlock, battery',
-        fromZigbee: [fz.generic_lock, fz.generic_lock_operation_event, fz.battery_200],
+        fromZigbee: [fz.generic_lock, fz.generic_lock_operation_event, fz.battery_200, fz.ignore_power_change],
         toZigbee: [tz.generic_lock],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
