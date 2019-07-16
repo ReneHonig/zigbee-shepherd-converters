@@ -461,7 +461,18 @@ const devices = [
             return {'l1': 1, 'l2': 2};
         },
     },
-
+    {
+        zigbeeModel: ['lumi.lock.acn02'],
+        model: 'ZNMS12LM',
+        description: 'Aqara S2 Lock',
+        supports: 'report: open, close, operation',
+        vendor: 'Xiaomi',
+        fromZigbee: [
+            fz.ZNMS12LM_closuresDoorLock_report, fz.ignore_basic_report,
+            fz.ignore_doorlock_change, fz.ignore_basic_change,
+        ],
+        toZigbee: [],
+    },
     // IKEA
     {
         zigbeeModel: [
@@ -930,7 +941,7 @@ const devices = [
         fromZigbee: [
             fz._324131092621_ignore_on, fz._324131092621_ignore_off, fz._324131092621_ignore_step,
             fz._324131092621_ignore_stop, fz._324131092621_notification,
-            fz.ignore_power_change, fz.hue_battery,
+            fz.ignore_power_change, fz.generic_battery_remaining,
         ],
         toZigbee: [],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
@@ -966,7 +977,7 @@ const devices = [
         description: 'Hue motion sensor',
         supports: 'occupancy, temperature, illuminance',
         fromZigbee: [
-            fz.hue_battery, fz.generic_occupancy, fz.generic_temperature,
+            fz.generic_battery_remaining, fz.generic_occupancy, fz.generic_temperature,
             fz.ignore_occupancy_change, fz.generic_illuminance, fz.ignore_illuminance_change,
             fz.ignore_temperature_change,
         ],
@@ -1002,7 +1013,7 @@ const devices = [
         description: 'Hue motion outdoor sensor',
         supports: 'occupancy, temperature, illuminance',
         fromZigbee: [
-            fz.hue_battery, fz.generic_occupancy, fz.generic_temperature,
+            fz.generic_battery_remaining, fz.generic_occupancy, fz.generic_temperature,
             fz.ignore_occupancy_change, fz.generic_illuminance, fz.ignore_illuminance_change,
             fz.ignore_temperature_change,
         ],
@@ -2261,7 +2272,7 @@ const devices = [
 
     // Smart Home Pty
     {
-        zigbeeModel: ['FB56-ZCW11HG1.2'],
+        zigbeeModel: ['FB56-ZCW11HG1.2', 'FB56-ZCW11HG1.4'],
         model: 'HGZB-07A',
         vendor: 'Smart Home Pty',
         description: 'RGBW Downlight',
@@ -2472,6 +2483,28 @@ const devices = [
         },
     },
 
+    // ROBB
+    {
+        zigbeeModel: ['ROB_200-004-0'],
+        model: 'ROB_200-004-0',
+        vendor: 'ROBB',
+        description: 'ZigBee AC phase-cut dimmer',
+        supports: 'on/off, brightness',
+        fromZigbee: [fz.brightness, fz.ignore_onoff_change, fz.state, fz.ignore_light_brightness_report],
+        toZigbee: [tz.light_onoff_brightness, tz.ignore_transition],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const cfg = {direction: 0, attrId: 0, dataType: 16, minRepIntval: 0, maxRepIntval: 1000, repChange: 0};
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.bind('genOnOff', coordinator, cb),
+                (cb) => device.foundation('genOnOff', 'configReport', [cfg], foundationCfg, cb),
+                (cb) => device.bind('genLevelCtrl', coordinator, cb),
+            ];
+
+            execute(device, actions, callback);
+        },
+    },
+
     // SmartThings
     {
         zigbeeModel: ['PGC313'],
@@ -2580,7 +2613,7 @@ const devices = [
         fromZigbee: [
             fz.generic_temperature, fz.ignore_temperature_change,
             fz.ignore_iaszone_report, fz.generic_ias_zone_motion_dev_change,
-            fz.bosch_ias_zone_motion_status_change, fz.generic_batteryvoltage_3000_2500,
+            fz.generic_ias_zone_occupancy_status_change, fz.generic_batteryvoltage_3000_2500,
         ],
         toZigbee: [],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
@@ -2604,7 +2637,7 @@ const devices = [
         supports: 'occupancy and temperature',
         fromZigbee: [
             fz.generic_temperature, fz.ignore_temperature_change, fz.ias_zone_motion_dev_change,
-            fz.bosch_ias_zone_motion_status_change, fz.generic_batteryvoltage_3000_2500,
+            fz.generic_ias_zone_occupancy_status_change, fz.generic_batteryvoltage_3000_2500,
         ],
         toZigbee: [],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
@@ -3007,11 +3040,10 @@ const devices = [
                 (cb) => device.bind('genBasic', coordinator, cb),
                 (cb) => device.bind('genPowerCfg', coordinator, cb),
                 (cb) => device.bind('genIdentify', coordinator, cb),
-                (cb) => device.bind('genTime', coordinator, cb),
                 (cb) => device.bind('genPollCtrl', coordinator, cb),
                 (cb) => device.bind('hvacThermostat', coordinator, cb),
                 (cb) => device.bind('hvacUserInterfaceCfg', coordinator, cb),
-                (cb) => device.report('hvacThermostat', 'localTemp', 300, 3600, 0, cb),
+                (cb) => device.report('hvacThermostat', 'localTemp', 1200, 3600, 0, cb),
                 (cb) => device.report('hvacThermostat', 'localTemperatureCalibration', 1, 0, 0, cb),
                 (cb) => device.report('hvacThermostat', 'occupiedHeatingSetpoint', 1, 0, 1, cb),
                 (cb) => device.report('hvacThermostat', 'runningState', 1, 0, 0, cb),
@@ -3194,6 +3226,23 @@ const devices = [
         supports: 'open/close',
         fromZigbee: [fz.cover_position_report, fz.cover_position, fz.cover_state_change, fz.cover_state_report],
         toZigbee: [tz.cover_position, tz.cover_open_close],
+    },
+    {
+        zigbeeModel: ['PSMP5_00.00.03.11TC'],
+        model: '12050',
+        vendor: 'Lupus',
+        description: 'LUPUSEC mains socket with power meter',
+        supports: 'on/off, power measurement',
+        fromZigbee: [fz.state, fz.ignore_onoff_change, fz.ignore_metering_change, fz.bitron_power],
+        toZigbee: [tz.on_off],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.report('seMetering', 'instantaneousDemand', 10, 60, 1, cb),
+                (cb) => device.bind('genOnOff', coordinator, cb),
+            ];
+            execute(device, actions, callback);
+        },
     },
 
     // Climax
@@ -3563,9 +3612,12 @@ const devices = [
         zigbeeModel: ['ZBT-Remote-EU-DIMV1A2'],
         model: 'AIRAM-CTR.U',
         vendor: 'Airam',
-        description: 'CTR.U remote (can only be used to control the Airam 4713407 bulb)',
-        supports: 'on/off',
-        fromZigbee: [],
+        description: 'CTR.U remote',
+        supports: 'on/off, brightness up/down and click/hold/release',
+        fromZigbee: [
+            fz.genOnOff_cmdOn, fz.genOnOff_cmdOff, fz.CTR_U_brightness_updown_click,
+            fz.CTR_U_brightness_updown_hold, fz.CTR_U_brightness_updown_release, fz.CTR_U_scene,
+        ],
         toZigbee: [],
     },
 
@@ -3696,7 +3748,7 @@ const devices = [
         fromZigbee: [
             fz.thermostat_dev_change,
             fz.eurotronic_thermostat_dev_change,
-            fz.ignore_thermostat_report, fz.hue_battery, fz.ignore_power_change,
+            fz.ignore_thermostat_report, fz.generic_battery_remaining, fz.ignore_power_change,
         ],
         toZigbee: [
             tz.thermostat_occupied_heating_setpoint, tz.thermostat_unoccupied_heating_setpoint,
@@ -3742,7 +3794,7 @@ const devices = [
         supports: 'occupancy and temperature',
         fromZigbee: [
             fz.generic_temperature, fz.ignore_temperature_change, fz.generic_batteryvoltage_3000_2500,
-            fz.ignore_power_change, fz.bosch_ias_zone_motion_status_change, fz.ignore_iaszone_change,
+            fz.ignore_power_change, fz.generic_ias_zone_occupancy_status_change, fz.ignore_iaszone_change,
         ],
         toZigbee: [],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
@@ -3767,7 +3819,7 @@ const devices = [
         supports: 'occupancy and temperature',
         fromZigbee: [
             fz.generic_temperature, fz.ignore_temperature_change, fz.ignore_power_change,
-            fz.generic_batteryvoltage_3000_2500, fz.bosch_ias_zone_motion_status_change,
+            fz.generic_batteryvoltage_3000_2500, fz.generic_ias_zone_occupancy_status_change,
             fz.ignore_iaszone_report, fz.ignore_iaszone_change,
         ],
         toZigbee: [],
@@ -4186,15 +4238,68 @@ const devices = [
         vendor: 'Securifi',
         description: 'Peanut Smart Plug',
         supports: 'on/off, power measurement',
-        fromZigbee: [fz.ignore_electrical_change, fz.state, fz.ignore_onoff_change],
+        fromZigbee: [fz.state, fz.ignore_onoff_change, fz.peanut_electrical, fz.ignore_electrical_change],
         toZigbee: [tz.on_off],
         configure: (ieeeAddr, shepherd, coordinator, callback) => {
             const device = shepherd.find(ieeeAddr, 1);
             const onOff = {direction: 0, attrId: 0, dataType: 16, minRepIntval: 0, maxRepIntval: 1000, repChange: 0};
-            const rmsCurrent = {
-                direction: 0, attrId: 1288, dataType: 33, minRepIntval: 0, maxRepIntval: 3, repChange: 0,
+
+            // Observed Voltage Multiplier 180 / Divisor 39321 = 0.004578
+            // (218.4 units / V = about 22 units per 1/10 V)
+            const rmsVoltage = {
+                direction: 0, attrId: 1285, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 22,
             };
-            const electricalCfg = [rmsCurrent];
+
+            // Observed Current Multiplier 72 / Divisor 39321 = 0.001831
+            // (546.1 units / A = about 5 units per 1/100 A)
+            const rmsCurrent = {
+                direction: 0, attrId: 1288, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 5,
+            };
+
+            // Observed Power Multiplier 10255 / Divisor 39321 = 0.2608
+            // (3.834 units / W = about 1 unit per 1/4 W)
+            const activePower = {
+                direction: 0, attrId: 1291, dataType: 41,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 1,
+            };
+
+            // Multipliers and Divisors might never change,
+            // but report at max 10 min. to ensure first report comes in reasonably promptly
+            const acVoltageMultiplier = {
+                direction: 0, attrId: 1536, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 0,
+            };
+            const acVoltageDivisor = {
+                direction: 0, attrId: 1537, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 0,
+            };
+
+            const acCurrentMultiplier = {
+                direction: 0, attrId: 1538, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 0,
+            };
+            const acCurrentDivisor = {
+                direction: 0, attrId: 1539, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 0,
+            };
+
+            const acPowerMultiplier = {
+                direction: 0, attrId: 1540, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 0,
+            };
+            const acPowerDivisor = {
+                direction: 0, attrId: 1541, dataType: 33,
+                minRepIntval: 10, maxRepIntval: 600, repChange: 0,
+            };
+
+            const electricalCfg = [
+                rmsVoltage, rmsCurrent, activePower,
+                acVoltageMultiplier, acVoltageDivisor,
+                acCurrentMultiplier, acCurrentDivisor,
+                acPowerMultiplier, acPowerDivisor,
+            ];
             const actions = [
                 (cb) => device.foundation('genOnOff', 'configReport', [onOff], foundationCfg, cb),
                 (cb) => device.bind('genOnOff', coordinator, cb),
@@ -4500,7 +4605,7 @@ const devices = [
         zigbeeModel: ['M350ST-W1R-01'],
         model: 'M350STW1',
         vendor: 'Leedarson',
-        description: 'LED PAR16 50 GU10 tunable white',
+        description: 'LED PAR16 50 GU10',
         extend: generic.light_onoff_brightness,
     },
     {
@@ -4581,6 +4686,35 @@ const devices = [
                     {manufSpec: 1, disDefaultRsp: 0, manufCode: 4406}, cb),
             ];
 
+            execute(device, actions, callback);
+        },
+    },
+
+    // TUYATEC
+    {
+        zigbeeModel: ['RH3040'],
+        model: 'RH3040',
+        vendor: 'TUYATEC',
+        description: 'PIR sensor',
+        supports: 'occupancy',
+        fromZigbee: [
+            fz.generic_battery_remaining, fz.ignore_power_change, fz.generic_battery_voltage,
+            fz.ignore_basic_report, fz.ignore_basic_change, fz.ignore_iaszone_change,
+            fz.generic_ias_zone_occupancy_status_change,
+        ],
+        toZigbee: [],
+        configure: (ieeeAddr, shepherd, coordinator, callback) => {
+            const device = shepherd.find(ieeeAddr, 1);
+            const actions = [
+                (cb) => device.bind('ssIasZone', coordinator, cb),
+                (cb) => device.write('ssIasZone', 'iasCieAddr', coordinator.device.getIeeeAddr(), cb),
+                (cb) => device.functional('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, cb),
+                (cb) => device.bind('genBasic', coordinator, cb),
+                (cb) => device.bind('ssIasZone', coordinator, cb),
+                (cb) => device.bind('genIdentify', coordinator, cb),
+                (cb) => device.bind('genPowerCfg', coordinator, cb),
+                (cb) => device.report('genPowerCfg', 'batteryVoltage', 'batteryPercentageRemaining', 1, 1000, 1, cb),
+            ];
             execute(device, actions, callback);
         },
     },
