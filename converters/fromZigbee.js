@@ -558,7 +558,7 @@ const converters = {
             return lookup[value] ? lookup[value] : null;
         },
     },
-    xiaomi_humidity: {
+    generic_humidity: {
         cid: 'msRelativeHumidity',
         type: ['attReport', 'readRsp'],
         convert: (model, msg, publish, options) => {
@@ -1190,6 +1190,7 @@ const converters = {
         convert: (model, msg, publish, options) => {
             const batt = msg.data.data.batteryPercentageRemaining;
             const battLow = msg.data.data.batteryAlarmState;
+            const voltage = msg.data.data.batteryVoltage;
             const results = {};
             if (batt != null) {
                 const value = Math.round(batt/200.0*10000)/100; // Out of 200
@@ -1201,6 +1202,9 @@ const converters = {
                 } else {
                     results['battery_low'] = false;
                 }
+            }
+            if (voltage != null) {
+                results['voltage'] = voltage * 100;
             }
             return results;
         },
@@ -2068,6 +2072,10 @@ const converters = {
                 result.unoccupied_heating_setpoint =
                     precisionRound(msg.data.data['unoccupiedHeatingSetpoint'], 2) / 100;
             }
+            if (typeof msg.data.data['occupiedCoolingSetpoint'] == 'number') {
+                result.occupied_cooling_setpoint =
+                    precisionRound(msg.data.data['occupiedCoolingSetpoint'], 2) / 100;
+            }
             if (typeof msg.data.data['weeklySchedule'] == 'number') {
                 result.weekly_schedule = msg.data.data['weeklySchedule'];
             }
@@ -2127,6 +2135,10 @@ const converters = {
             if (typeof msg.data.data['unoccupiedHeatingSetpoint'] == 'number') {
                 result.unoccupied_heating_setpoint =
                     precisionRound(msg.data.data['unoccupiedHeatingSetpoint'], 2) / 100;
+            }
+            if (typeof msg.data.data['occupiedCoolingSetpoint'] == 'number') {
+                result.occupied_cooling_setpoint =
+                    precisionRound(msg.data.data['occupiedCoolingSetpoint'], 2) / 100;
             }
             if (typeof msg.data.data['weeklySchedule'] == 'number') {
                 result.weekly_schedule = msg.data.data['weeklySchedule'];
@@ -2886,6 +2898,48 @@ const converters = {
                 result.repeat = null;
             }
             return result;
+        },
+    },
+    konke_click: {
+        cid: 'genOnOff',
+        type: ['attReport', 'readRsp'],
+        convert: (model, msg, publish, options) => {
+            const value = msg.data.data['onOff'];
+            const lookup = {
+                128: {click: 'single'}, // single click
+                129: {click: 'double'}, // double and many click
+                130: {click: 'long'}, // hold
+            };
+
+            return lookup[value] ? lookup[value] : null;
+        },
+    },
+    E1746_linkquality: {
+        cid: 'genBasic',
+        type: ['attReport', 'readRsp'],
+        convert: (model, msg, publish, options) => {
+            return {linkquality: msg.linkquality};
+        },
+    },
+    generic_change_batteryvoltage_3000_2500: {
+        cid: 'genPowerCfg',
+        type: ['devChange'],
+        convert: (model, msg, publish, options) => {
+            const battery = {max: 3000, min: 2500};
+            const voltage = msg.data.data['batteryVoltage'] * 100;
+            return {
+                battery: toPercentage(voltage, battery.min, battery.max),
+                voltage: voltage,
+            };
+        },
+    },
+    generic_device_temperature: {
+        cid: 'genDeviceTempCfg',
+        type: ['devChange'],
+        convert: (model, msg, publish, options) => {
+            if (msg.data.data.hasOwnProperty('currentTemperature')) {
+                return {temperature: msg.data.data.currentTemperature};
+            }
         },
     },
 
