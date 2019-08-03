@@ -867,6 +867,15 @@ const converters = {
             return {water_leak: msg.data.zoneStatus === 1};
         },
     },
+    SJCGQ11LM_water_leak_interval: {
+        cid: 'genBasic',
+        type: ['attReport', 'readRsp'],
+        convert: (model, msg, publish, options) => {
+            if (msg.data.data.hasOwnProperty('65281')) {
+                return {water_leak: msg.data.data['65281']['100'] === 1};
+            }
+        },
+    },
     state: {
         cid: 'genOnOff',
         type: ['attReport', 'readRsp'],
@@ -1878,6 +1887,34 @@ const converters = {
         type: 'statusChange',
         convert: (model, msg, publish, options) => {
             const zoneStatus = msg.data.zoneStatus;
+            return {
+                occupancy: (zoneStatus & 1) > 0, // Bit 0 = Alarm 1: Presence Indication
+                tamper: (zoneStatus & 1<<2) > 0, // Bit 2 = Tamper status
+                battery_low: (zoneStatus & 1<<3) > 0, // Bit 3 = Battery LOW indicator (trips around 2.4V)
+            };
+        },
+    },
+    generic_ias_zone_occupancy_status_change_no_off_msg: {
+        cid: 'ssIasZone',
+        type: 'statusChange',
+        convert: (model, msg, publish, options) => {
+            const zoneStatus = msg.data.zoneStatus;
+            const useOptionsTimeout = options && options.hasOwnProperty('occupancy_timeout');
+            const timeout = useOptionsTimeout ? options.occupancy_timeout : occupancyTimeout;
+            const deviceID = msg.endpoints[0].device.ieeeAddr;
+
+            if (store[deviceID]) {
+                clearTimeout(store[deviceID]);
+                store[deviceID] = null;
+            }
+
+            if (timeout !== 0) {
+                store[deviceID] = setTimeout(() => {
+                    publish({occupancy: false});
+                    store[deviceID] = null;
+                }, timeout * 1000);
+            }
+
             return {
                 occupancy: (zoneStatus & 1) > 0, // Bit 0 = Alarm 1: Presence Indication
                 tamper: (zoneStatus & 1<<2) > 0, // Bit 2 = Tamper status
@@ -2900,6 +2937,27 @@ const converters = {
             return result;
         },
     },
+    DTB190502A1_parse: {
+        cid: 'genOnOff',
+        type: ['attReport', 'readRsp'],
+        convert: (model, msg, publish, options) => {
+            const lookupKEY = {
+                '0': 'KEY_SYS',
+                '1': 'KEY_UP',
+                '2': 'KEY_DOWN',
+                '3': 'KEY_NONE',
+            };
+            const lookupLED = {
+                '0': 'OFF',
+                '1': 'ON',
+            };
+            return {
+                cpu_temperature: precisionRound(msg.data.data['41361'], 2),
+                key_state: lookupKEY[msg.data.data['41362']],
+                led_state: lookupLED[msg.data.data['41363']],
+            };
+        },
+    },
     konke_click: {
         cid: 'genOnOff',
         type: ['attReport', 'readRsp'],
@@ -2940,6 +2998,63 @@ const converters = {
             if (msg.data.data.hasOwnProperty('currentTemperature')) {
                 return {temperature: msg.data.data.currentTemperature};
             }
+        },
+    },
+    ptvo_switch_state: {
+        cid: 'genOnOff',
+        type: 'attReport',
+        convert: (model, msg, publish, options) => {
+            const ep = msg.endpoints[0];
+            const key = `state_${getKey(model.ep(ep.device), ep.epId)}`;
+            const payload = {};
+            payload[key] = msg.data.data['onOff'] === 1 ? 'ON' : 'OFF';
+            return payload;
+        },
+    },
+    ptvo_switch_buttons: {
+        cid: 'genMultistateInput',
+        type: 'attReport',
+        convert: (model, msg, publish, options) => {
+            const ep = msg.endpoints[0];
+            const button = getKey(model.ep(ep.device), ep.epId);
+            const value = msg.data.data['presentValue'];
+
+            const actionLookup = {
+                1: 'single',
+                2: 'double',
+                3: 'tripple',
+                4: 'hold',
+            };
+
+            const action = actionLookup[value];
+
+            if (button) {
+                return {click: button + (action ? `_${action}` : '')};
+            }
+        },
+    },
+    keypad20states: {
+        cid: 'genOnOff',
+        type: ['devChange', 'attReport'],
+        convert: (model, msg, publish, options) => {
+            const ep = msg.endpoints[0];
+            const button = getKey(model.ep(ep.device), ep.epId);
+            const state = msg.data.data['onOff'] === 1 ? true : false;
+            if (button) {
+                return {[button]: state};
+            }
+        },
+    },
+    keypad20_battery: {
+        cid: 'genPowerCfg',
+        type: ['devChange', 'attReport'],
+        convert: (model, msg, publish, options) => {
+            const battery = {max: 3000, min: 2100};
+            const voltage = msg.data.data['mainsVoltage'] /10;
+            return {
+                battery: toPercentage(voltage, battery.min, battery.max),
+                voltage: voltage,
+            };
         },
     },
 
